@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<link rel="icon" href="/assets/images/favicon.ico">
+
+<title>How I Built a Self-Updating Knowledge Base That Keeps My AI QA Agent Always in Sync With the Codebase | islammdshariful</title>
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>How I Built a Self-Updating Knowledge Base That Keeps My AI QA Agent Always in Sync With the Codebase | islammdshariful</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="How I Built a Self-Updating Knowledge Base That Keeps My AI QA Agent Always in Sync With the Codebase" />
+<meta name="author" content="shariful" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="An AI QA agent is only as good as the knowledge it has about your codebase. When your REST API adds new endpoints, your database schema gains new columns, or your settings structure changes, your agent’s reference docs go stale — and stale docs produce wrong test cases." />
+<meta property="og:description" content="An AI QA agent is only as good as the knowledge it has about your codebase. When your REST API adds new endpoints, your database schema gains new columns, or your settings structure changes, your agent’s reference docs go stale — and stale docs produce wrong test cases." />
+<link rel="canonical" href="https://islammdshariful.github.io/blog-self-updating-qa-knowledge-base/" />
+<meta property="og:url" content="https://islammdshariful.github.io/blog-self-updating-qa-knowledge-base/" />
+<meta property="og:site_name" content="islammdshariful" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-04-03T00:00:00+06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="How I Built a Self-Updating Knowledge Base That Keeps My AI QA Agent Always in Sync With the Codebase" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"shariful"},"dateModified":"2026-04-03T00:00:00+06:00","datePublished":"2026-04-03T00:00:00+06:00","description":"An AI QA agent is only as good as the knowledge it has about your codebase. When your REST API adds new endpoints, your database schema gains new columns, or your settings structure changes, your agent’s reference docs go stale — and stale docs produce wrong test cases.","headline":"How I Built a Self-Updating Knowledge Base That Keeps My AI QA Agent Always in Sync With the Codebase","mainEntityOfPage":{"@type":"WebPage","@id":"https://islammdshariful.github.io/blog-self-updating-qa-knowledge-base/"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://islammdshariful.github.io/assets/images/logo.png"},"name":"shariful"},"url":"https://islammdshariful.github.io/blog-self-updating-qa-knowledge-base/"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    
+<link href="/assets/css/screen.css" rel="stylesheet">
+
+<link href="/assets/css/main.css" rel="stylesheet">
+
+<script src="/assets/js/jquery.min.js"></script>
+
+</head>
+
+
+
+
+<body class="layout-post">
+	<!-- defer loading of font and font awesome -->
+	<noscript id="deferred-styles">
+		<link href="https://fonts.googleapis.com/css?family=Righteous%7CMerriweather:300,300i,400,400i,700,700i" rel="stylesheet">
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+	</noscript>
+
+
+<!-- Begin Menu Navigation
+================================================== -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top mediumnavigation nav-down">
+
+    <div class="container pr-0">
+
+    <!-- Search icon (left) -->
+    <div class="nav-left-actions">
+        <div class="nav-search-wrap">
+            <div class="nav-search">
+                <span class="nav-search-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <script src="/assets/js/lunr.js"></script>
+
+
+<style>
+    #lunrsearchresults {
+        position: fixed;
+        top: 60px;
+        left: 15px;
+        width: 400px;
+        min-height: 100px;
+        max-height: 70vh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        z-index: 9999;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        padding: 12px 16px;
+        opacity: 0;
+        transform: translateY(-10px) scale(0.97);
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    #lunrsearchresults.visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+    }
+    /* Custom scrollbar */
+    #lunrsearchresults::-webkit-scrollbar {
+        width: 6px;
+    }
+    #lunrsearchresults::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #lunrsearchresults::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 3px;
+    }
+    #lunrsearchresults::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
+    }
+    #lunrsearchresults ul { list-style: none; padding: 0; margin: 0; }
+    @media (max-width: 991px) {
+        #lunrsearchresults {
+            position: fixed;
+            top: 60px;
+            left: 15px;
+            right: 15px;
+            width: auto;
+        }
+    }
+    .lunrsearchresult .title {color: #A69990;}
+    .lunrsearchresult .url {color: silver; font-size: 0.8rem;}
+    .lunrsearchresult a {display: block; color: #777; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05);}
+    .lunrsearchresult a:hover, .lunrsearchresult a:focus {text-decoration: none;}
+    .lunrsearchresult a:hover .title {text-decoration: underline;}
+</style>
+
+
+<form class="bd-search" onSubmit="return lunr_search(document.getElementById('lunrsearch').value);">
+    <input type="text" class="form-control text-small launch-modal-search" id="lunrsearch" name="q" maxlength="255" value="" placeholder="Type and enter..."/>
+</form>
+
+<div id="lunrsearchresults">
+    <ul></ul>
+</div>
+
+<script src="/assets/js/lunrsearchengine.js"></script>
+<script>
+(function() {
+  var icon = document.querySelector('.nav-search-icon');
+  var search = document.querySelector('.nav-search');
+  var input = document.getElementById('lunrsearch');
+
+  icon.addEventListener('click', function(e) {
+    e.stopPropagation();
+    search.classList.toggle('active');
+    if (search.classList.contains('active')) {
+      input.focus();
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.nav-search')) {
+      search.classList.remove('active');
+    }
+  });
+})();
+</script>
+            </div>
+        </div>
+    </div>
+
+    <div class="navbar-nav-always" id="navbarMediumish">
+
+        <!-- Begin Menu (centered) -->
+        <ul class="navbar-nav mx-auto">
+
+            
+            <li class="nav-item">
+            
+            <a class="nav-link" href="/">Home</a>
+            </li>
+
+            <li class="nav-item">
+            <a class="nav-link" href="/categories">Categories</a>
+            </li>
+
+            <li class="nav-item">
+            <a class="nav-link" href="/about-me">About Me</a>
+            </li>
+
+        </ul>
+        <!-- End Menu -->
+
+    </div>
+
+    <!-- Dark mode toggle (right) -->
+    <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+
+    </div>
+
+    </div>
+</nav>
+<!-- End Navigation
+================================================== -->
+
+<div class="site-content">
+
+<div class="container">
+
+
+
+<!-- Content
+================================================== -->
+<div class="main-content">
+    <!-- Begin Article
+================================================== -->
+<div class="container">
+    <div class="row">
+
+        <!-- Post -->
+        
+
+        <div class="col-md-10 mx-auto">
+            <div class="mainheading">
+
+                <!-- Author Box -->
+                
+                <div class="row post-top-meta">
+                    <div class="col-xs-12 col-md-3 col-lg-2 text-center text-md-left mb-4 mb-md-0">
+                        
+                        <img class="author-thumb" src="/assets/images/avatar.jpg" alt="islammdshariful">
+                        
+                    </div>
+                    <div class="col-xs-12 col-md-9 col-lg-10 text-center text-md-left">
+                        <a target="_blank" class="link-dark" href="">islammdshariful</a>
+                        <br/><span class="author-description">QA Engineer. I write about Playwright, automation, and AI-driven QA workflows.</span>
+                    </div>
+                </div>
+                
+
+                <!-- Post Title -->
+                <h1 class="posttitle">How I Built a Self-Updating Knowledge Base That Keeps My AI QA Agent Always in Sync With the Codebase</h1>
+
+            </div>
+
+            <!-- Adsense if enabled from _config.yml (change your pub id and slot) -->
+            
+            <!-- End Adsense -->
+
+            <!-- Post Featured Image -->
+            
+            <!-- End Featured Image -->
+
+            <!-- Post Content -->
+            <div class="article-post">
+                <!-- Toc if any -->
+                
+                <!-- End Toc -->
+                <p>An AI QA agent is only as good as the knowledge it has about your codebase. When your REST API adds new endpoints, your database schema gains new columns, or your settings structure changes, your agent’s reference docs go stale — and stale docs produce wrong test cases.</p>
+
+<p>I built a system that extracts live knowledge from the codebase, diffs it against the last extraction, and surgically updates curated reference documents — all triggered by a single command. In this post, I’ll walk through the full architecture: the extraction script, the curated docs, the update command, and how they work together to keep an AI agent permanently up to date.</p>
+
+<hr />
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+<ol>
+  <li><a href="#the-problem-ai-agent-knowledge-decay">The Problem: AI Agent Knowledge Decay</a></li>
+  <li><a href="#architecture-overview">Architecture Overview</a></li>
+  <li><a href="#component-1-the-knowledge-extraction-script">Component 1: The Knowledge Extraction Script</a></li>
+  <li><a href="#component-2-the-curated-reference-documents">Component 2: The Curated Reference Documents</a></li>
+  <li><a href="#component-3-the-update-command-orchestrator">Component 3: The Update Command (Orchestrator)</a></li>
+  <li><a href="#how-it-all-works-together">How It All Works Together</a></li>
+  <li><a href="#step-by-step-implementation-guide">Step-by-Step Implementation Guide</a></li>
+  <li><a href="#key-design-decisions-and-why">Key Design Decisions and Why</a></li>
+  <li><a href="#customizing-for-your-project">Customizing for Your Project</a></li>
+  <li><a href="#conclusion">Conclusion</a></li>
+</ol>
+
+<hr />
+
+<h2 id="the-problem-ai-agent-knowledge-decay">The Problem: AI Agent Knowledge Decay</h2>
+
+<p>In a <a href="/blog-ai-qa-agent-claude-code">previous post</a>, I showed how I built an AI-powered QA agent that generates comprehensive test plans from pull requests. The agent reads code diffs and produces white-box test cases with full prioritization.</p>
+
+<p>But there’s a problem that becomes obvious after a few weeks: <strong>the agent’s domain knowledge goes stale</strong>.</p>
+
+<p>Here’s what happens:</p>
+<ul>
+  <li>A developer adds a new REST API endpoint — the agent’s API reference doesn’t know about it</li>
+  <li>A migration adds a new database column — the agent’s schema reference is outdated</li>
+  <li>New settings are introduced — the agent doesn’t know the defaults or validation rules</li>
+  <li>New hooks and filters are registered — the agent misses cross-feature regression risks</li>
+</ul>
+
+<p>If the agent doesn’t know about a new endpoint, it can’t generate test cases for it. If it doesn’t know about a new database column, it can’t create data integrity tests. The agent’s test plans gradually degrade from comprehensive to incomplete.</p>
+
+<p><strong>Manual updates don’t scale.</strong> Reading through every PR to figure out which docs need updating, then editing markdown tables by hand — that’s exactly the kind of tedious, error-prone work that should be automated.</p>
+
+<p>I needed a system that:</p>
+<ol>
+  <li><strong>Extracts</strong> fresh knowledge directly from the source code (not from PRs or changelogs)</li>
+  <li><strong>Diffs</strong> the extraction against the previous one to detect what changed</li>
+  <li><strong>Updates</strong> only the affected curated docs, preserving formatting and structure</li>
+  <li><strong>Never rewrites</strong> docs that haven’t changed</li>
+</ol>
+
+<hr />
+
+<h2 id="architecture-overview">Architecture Overview</h2>
+
+<p>The system has three layers:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+</pre></td><td class="rouge-code"><pre>┌──────────────────────────────────────────────────────────────┐
+│                   /update-qa-docs                            │
+│                 (Slash Command)                              │
+│                                                              │
+│  1. Runs extract-knowledge.sh ──► Raw extraction files       │
+│  2. Diffs raw files against .prev/ snapshots                 │
+│  3. For each changed file, reads the delta                   │
+│  4. Surgically updates the corresponding curated doc         │
+│  5. Shows summary of what changed                            │
+└──────────────────────────────────────────────────────────────┘
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p><strong>File structure:</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+</pre></td><td class="rouge-code"><pre>.claude/
+├── commands/
+│   └── update-qa-docs.md         # Slash command (orchestrator)
+├── scripts/
+│   └── extract-knowledge.sh      # Codebase knowledge extractor
+└── docs/
+    ├── rest-api.md               # Curated: API endpoint catalog
+    ├── database-schema.md        # Curated: Table schemas &amp; migrations
+    ├── smart-tags.md             # Curated: Template variable reference
+    ├── settings-map.md           # Curated: Settings structure &amp; defaults
+    ├── feature-interactions.md   # Curated: Cross-feature dependency map
+    ├── qa-playbook.md            # Curated: Security payloads &amp; test commands
+    └── raw/                      # Machine-generated extractions
+        ├── rest-routes.txt
+        ├── db-tables.txt
+        ├── smart-tags.txt
+        ├── settings-defaults.txt
+        ├── hooks-filters.txt
+        ├── capabilities.txt
+        ├── migrations.txt
+        └── .prev/                # Previous extraction (for diffing)
+            ├── rest-routes.txt
+            ├── db-tables.txt
+            └── ...
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>There are two distinct types of documentation:</p>
+
+<ol>
+  <li><strong>Raw extractions</strong> (<code class="language-plaintext highlighter-rouge">raw/*.txt</code>) — Machine-generated, unedited grep/awk output from the codebase. These are disposable and regenerated every run.</li>
+  <li><strong>Curated docs</strong> (<code class="language-plaintext highlighter-rouge">docs/*.md</code>) — Human-structured, agent-readable markdown references. These are the docs the QA agent actually uses. They have tables, explanations, cross-references, and domain context that raw grep output lacks.</li>
+</ol>
+
+<p>The key insight: <strong>raw extractions are truth, curated docs are interpretation</strong>. The system uses the raw data to keep the curated interpretation accurate.</p>
+
+<hr />
+
+<h2 id="component-1-the-knowledge-extraction-script">Component 1: The Knowledge Extraction Script</h2>
+
+<p><strong>File:</strong> <code class="language-plaintext highlighter-rouge">.claude/scripts/extract-knowledge.sh</code></p>
+
+<p>This shell script scans your entire codebase and extracts structured knowledge into text files. Think of it as a specialized static analysis tool that outputs human/AI-readable data rather than lint warnings.</p>
+
+<h3 id="what-it-extracts">What It Extracts</h3>
+
+<p>The script has 7 extraction targets, each producing a separate raw file:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Target</th>
+      <th>Output File</th>
+      <th>What It Extracts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">rest-routes</code></td>
+      <td><code class="language-plaintext highlighter-rouge">rest-routes.txt</code></td>
+      <td>Route registrations, HTTP methods, permission callbacks, API namespaces</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">db-tables</code></td>
+      <td><code class="language-plaintext highlighter-rouge">db-tables.txt</code></td>
+      <td>CREATE TABLE statements, column definitions, model field declarations, option keys, meta keys</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">smart-tags</code></td>
+      <td><code class="language-plaintext highlighter-rouge">smart-tags.txt</code></td>
+      <td>Template variable registrations, context definitions, replacement logic</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">settings</code></td>
+      <td><code class="language-plaintext highlighter-rouge">settings-defaults.txt</code></td>
+      <td>Full options files, default values, dynamic options, internal options, addon options</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">capabilities</code></td>
+      <td><code class="language-plaintext highlighter-rouge">capabilities.txt</code></td>
+      <td>Permission definitions, access control classes, route access declarations</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">hooks</code></td>
+      <td><code class="language-plaintext highlighter-rouge">hooks-filters.txt</code></td>
+      <td>Custom actions/filters, core framework hooks used, conflict prevention patterns</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">migrations</code></td>
+      <td><code class="language-plaintext highlighter-rouge">migrations.txt</code></td>
+      <td>Update/migration classes, version constants, addon update entries</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="key-implementation-details">Key Implementation Details</h3>
+
+<p><strong>Modular extraction functions:</strong></p>
+
+<p>Each target has its own extraction function. This allows selective updates — you don’t need to re-extract everything when only one area changed.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+</pre></td><td class="rouge-code"><pre>extract_rest_routes<span class="o">()</span> <span class="o">{</span>
+    <span class="nb">local </span><span class="nv">outfile</span><span class="o">=</span><span class="s2">"</span><span class="nv">$OUTPUT_DIR</span><span class="s2">/rest-routes.txt"</span>
+    <span class="o">{</span>
+        <span class="nb">echo</span> <span class="s2">"# REST API Routes"</span>
+        <span class="nb">echo</span> <span class="s2">"# Extracted: </span><span class="si">$(</span><span class="nb">date</span> <span class="nt">-u</span> <span class="s1">'+%Y-%m-%d %H:%M:%S UTC'</span><span class="si">)</span><span class="s2">"</span>
+        <span class="nb">echo</span> <span class="s2">""</span>
+
+        <span class="nb">echo</span> <span class="s2">"============================================"</span>
+        <span class="nb">echo</span> <span class="s2">"ROUTE REGISTRATION CALLS"</span>
+        <span class="nb">echo</span> <span class="s2">"============================================"</span>
+
+        <span class="k">for </span><span class="nb">dir </span><span class="k">in</span> <span class="s2">"</span><span class="k">${</span><span class="nv">ALL_DIRS</span><span class="p">[@]</span><span class="k">}</span><span class="s2">"</span><span class="p">;</span> <span class="k">do
+            </span><span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"register_rest_route</span><span class="se">\|</span><span class="s2">register_rest_field"</span> <span class="s2">"</span><span class="nv">$dir</span><span class="s2">/app/"</span> <span class="se">\</span>
+                <span class="nt">--include</span><span class="o">=</span><span class="s2">"*.php"</span> 2&gt;/dev/null <span class="o">||</span> <span class="nb">true
+        </span><span class="k">done
+
+        </span><span class="nb">echo</span> <span class="s2">""</span>
+        <span class="nb">echo</span> <span class="s2">"============================================"</span>
+        <span class="nb">echo</span> <span class="s2">"ROUTE DEFINITIONS"</span>
+        <span class="nb">echo</span> <span class="s2">"============================================"</span>
+
+        <span class="k">for </span><span class="nb">dir </span><span class="k">in</span> <span class="s2">"</span><span class="k">${</span><span class="nv">ALL_DIRS</span><span class="p">[@]</span><span class="k">}</span><span class="s2">"</span><span class="p">;</span> <span class="k">do
+            </span>find <span class="s2">"</span><span class="nv">$dir</span><span class="s2">/app/"</span> <span class="nt">-name</span> <span class="s2">"Api.php"</span> <span class="nt">-o</span> <span class="nt">-name</span> <span class="s2">"Routes.php"</span> 2&gt;/dev/null | <span class="k">while </span><span class="nb">read</span> <span class="nt">-r</span> file<span class="p">;</span> <span class="k">do
+                </span><span class="nb">echo</span> <span class="s2">"--- </span><span class="nv">$file</span><span class="s2"> ---"</span>
+                <span class="nb">grep</span> <span class="nt">-n</span> <span class="s2">"'GET'</span><span class="se">\|</span><span class="s2">'POST'</span><span class="se">\|</span><span class="s2">'PUT'</span><span class="se">\|</span><span class="s2">'DELETE'</span><span class="se">\|</span><span class="s2">'PATCH'"</span> <span class="s2">"</span><span class="nv">$file</span><span class="s2">"</span> 2&gt;/dev/null <span class="o">||</span> <span class="nb">true
+            </span><span class="k">done
+        done</span>
+
+        <span class="c"># ... permission callbacks, namespaces</span>
+    <span class="o">}</span> <span class="o">&gt;</span> <span class="s2">"</span><span class="nv">$outfile</span><span class="s2">"</span>
+    write_output <span class="s2">"</span><span class="nv">$outfile</span><span class="s2">"</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p><strong>Built-in diff mode for change detection:</strong></p>
+
+<p>The <code class="language-plaintext highlighter-rouge">--diff</code> flag enables the most important feature: comparing current extractions against previous ones.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre></td><td class="rouge-code"><pre><span class="c"># Save previous extraction before overwriting</span>
+<span class="k">if</span> <span class="nv">$DIFF_MODE</span> <span class="o">&amp;&amp;</span> <span class="o">[</span> <span class="nt">-d</span> <span class="s2">"</span><span class="nv">$OUTPUT_DIR</span><span class="s2">"</span> <span class="o">]</span><span class="p">;</span> <span class="k">then
+    </span><span class="nb">rm</span> <span class="nt">-rf</span> <span class="s2">"</span><span class="nv">$OUTPUT_DIR</span><span class="s2">/.prev"</span>
+    <span class="nb">mkdir</span> <span class="nt">-p</span> <span class="s2">"</span><span class="nv">$OUTPUT_DIR</span><span class="s2">/.prev"</span>
+    <span class="nb">cp</span> <span class="s2">"</span><span class="nv">$OUTPUT_DIR</span><span class="s2">"</span>/<span class="k">*</span>.txt <span class="s2">"</span><span class="nv">$OUTPUT_DIR</span><span class="s2">/.prev/"</span> 2&gt;/dev/null <span class="o">||</span> <span class="nb">true
+</span><span class="k">fi</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>After extraction, it reports what changed:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+</pre></td><td class="rouge-code"><pre>write_output<span class="o">()</span> <span class="o">{</span>
+    <span class="nb">local </span><span class="nv">file</span><span class="o">=</span><span class="s2">"</span><span class="nv">$1</span><span class="s2">"</span>
+    <span class="nb">local </span><span class="nv">old_file</span><span class="o">=</span><span class="s2">"</span><span class="nv">$OUTPUT_DIR</span><span class="s2">/.prev/</span><span class="si">$(</span><span class="nb">basename</span> <span class="s2">"</span><span class="nv">$file</span><span class="s2">"</span><span class="si">)</span><span class="s2">"</span>
+
+    <span class="k">if</span> <span class="nv">$DIFF_MODE</span> <span class="o">&amp;&amp;</span> <span class="o">[</span> <span class="nt">-f</span> <span class="s2">"</span><span class="nv">$old_file</span><span class="s2">"</span> <span class="o">]</span><span class="p">;</span> <span class="k">then
+        </span><span class="nb">local </span>diff_count
+        <span class="nv">diff_count</span><span class="o">=</span><span class="si">$(</span>diff <span class="s2">"</span><span class="nv">$old_file</span><span class="s2">"</span> <span class="s2">"</span><span class="nv">$file</span><span class="s2">"</span> 2&gt;/dev/null | <span class="nb">grep</span> <span class="nt">-c</span> <span class="s1">'^[&lt;&gt;]'</span> <span class="o">||</span> <span class="nb">true</span><span class="si">)</span>
+        <span class="k">if</span> <span class="o">[</span> <span class="s2">"</span><span class="nv">$diff_count</span><span class="s2">"</span> <span class="nt">-gt</span> 0 <span class="o">]</span><span class="p">;</span> <span class="k">then
+            </span>print_warn <span class="s2">"</span><span class="si">$(</span><span class="nb">basename</span> <span class="s2">"</span><span class="nv">$file</span><span class="s2">"</span><span class="si">)</span><span class="s2">: </span><span class="nv">$diff_count</span><span class="s2"> lines changed"</span>
+        <span class="k">else
+            </span>print_info <span class="s2">"</span><span class="si">$(</span><span class="nb">basename</span> <span class="s2">"</span><span class="nv">$file</span><span class="s2">"</span><span class="si">)</span><span class="s2">: no changes"</span>
+        <span class="k">fi
+    fi</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p><strong>Multi-directory scanning:</strong></p>
+
+<p>For monorepos or plugin architectures with addons, the script discovers all relevant directories and scans across them:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+</pre></td><td class="rouge-code"><pre><span class="c"># Collect all addon/module directories</span>
+<span class="nv">ADDON_DIRS</span><span class="o">=()</span>
+<span class="k">for </span><span class="nb">dir </span><span class="k">in</span> <span class="s2">"</span><span class="nv">$REPO_ROOT</span><span class="s2">"</span>/my-addon-<span class="k">*</span>/<span class="p">;</span> <span class="k">do
+    if</span> <span class="o">[</span> <span class="nt">-d</span> <span class="s2">"</span><span class="nv">$dir</span><span class="s2">"</span> <span class="o">]</span><span class="p">;</span> <span class="k">then
+        </span>ADDON_DIRS+<span class="o">=(</span><span class="s2">"</span><span class="nv">$dir</span><span class="s2">"</span><span class="o">)</span>
+    <span class="k">fi
+done</span>
+
+<span class="c"># All search directories</span>
+<span class="nv">ALL_DIRS</span><span class="o">=(</span><span class="s2">"</span><span class="nv">$CORE_DIR</span><span class="s2">"</span> <span class="s2">"</span><span class="k">${</span><span class="nv">ADDON_DIRS</span><span class="p">[@]</span><span class="k">}</span><span class="s2">"</span><span class="o">)</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>Every extraction function iterates over <code class="language-plaintext highlighter-rouge">ALL_DIRS</code>, so new addons are automatically picked up without changing the script.</p>
+
+<p><strong>Deep extraction, not surface-level grep:</strong></p>
+
+<p>Each extraction goes multiple layers deep. For example, the database extraction doesn’t just find <code class="language-plaintext highlighter-rouge">CREATE TABLE</code> — it also extracts:</p>
+<ul>
+  <li>Table name references across the codebase</li>
+  <li>Column additions via <code class="language-plaintext highlighter-rouge">ALTER TABLE</code> or migration helpers</li>
+  <li>Model field type declarations (<code class="language-plaintext highlighter-rouge">$jsonFields</code>, <code class="language-plaintext highlighter-rouge">$booleanFields</code>, etc.)</li>
+  <li><code class="language-plaintext highlighter-rouge">wp_options</code> keys</li>
+  <li>Post meta, term meta, and user meta keys</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+</pre></td><td class="rouge-code"><pre>extract_db_tables<span class="o">()</span> <span class="o">{</span>
+    <span class="c"># CREATE TABLE statements</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"CREATE TABLE</span><span class="se">\|</span><span class="s2">dbDelta</span><span class="se">\|</span><span class="s2">getTableName</span><span class="se">\|</span><span class="s2">tableName"</span> ...
+
+    <span class="c"># Table name references</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"aioseo_posts</span><span class="se">\|</span><span class="s2">aioseo_terms</span><span class="se">\|</span><span class="s2">..."</span> ...
+
+    <span class="c"># Column additions</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"addColumn</span><span class="se">\|</span><span class="s2">dropColumn</span><span class="se">\|</span><span class="s2">ALTER TABLE"</span> ...
+
+    <span class="c"># Model field declarations</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s1">'\$jsonFields\|\$booleanFields\|\$numericFields'</span> ...
+
+    <span class="c"># Options keys</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"get_option</span><span class="se">\|</span><span class="s2">update_option</span><span class="se">\|</span><span class="s2">add_option</span><span class="se">\|</span><span class="s2">delete_option"</span> ...
+
+    <span class="c"># Meta keys</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"_aioseo_</span><span class="se">\|</span><span class="s2">'_aioseo"</span> ...
+<span class="o">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="usage">Usage</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+</pre></td><td class="rouge-code"><pre><span class="c"># Extract everything with diff detection</span>
+./extract-knowledge.sh all <span class="nt">--diff</span>
+
+<span class="c"># Extract only REST routes</span>
+./extract-knowledge.sh rest-routes <span class="nt">--verbose</span>
+
+<span class="c"># Extract multiple targets</span>
+./extract-knowledge.sh db-tables settings migrations <span class="nt">--diff</span>
+
+<span class="c"># Custom output directory</span>
+./extract-knowledge.sh all <span class="nt">--output-dir</span><span class="o">=</span>/tmp/extraction
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<hr />
+
+<h2 id="component-2-the-curated-reference-documents">Component 2: The Curated Reference Documents</h2>
+
+<p>The raw extractions are comprehensive but noisy — they’re grep output with line numbers, file paths, and duplicates. The <strong>curated docs</strong> transform this raw data into structured, agent-optimized references.</p>
+
+<p>Here’s what makes curated docs different from raw extractions:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th>Raw Extraction</th>
+      <th>Curated Doc</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Format</td>
+      <td>grep output with line numbers</td>
+      <td>Markdown tables, headers, code blocks</td>
+    </tr>
+    <tr>
+      <td>Duplicates</td>
+      <td>Many (same pattern matched multiple times)</td>
+      <td>Deduplicated, one entry per item</td>
+    </tr>
+    <tr>
+      <td>Context</td>
+      <td>File paths only</td>
+      <td>Explanations, relationships, behavior notes</td>
+    </tr>
+    <tr>
+      <td>Cross-references</td>
+      <td>None</td>
+      <td>Links between related features</td>
+    </tr>
+    <tr>
+      <td>Usability</td>
+      <td>For diffing</td>
+      <td>For AI agent consumption</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="document-catalog">Document Catalog</h3>
+
+<p>Here’s what each curated doc covers and why the QA agent needs it:</p>
+
+<h4 id="rest-api-endpoint-catalog-rest-apimd">REST API Endpoint Catalog (<code class="language-plaintext highlighter-rouge">rest-api.md</code>)</h4>
+
+<p>A complete catalog of every API endpoint with method, route, access level, callback, and purpose:</p>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+</pre></td><td class="rouge-code"><pre><span class="gu">## System &amp; Options</span>
+
+| Method | Route | Access | Callback | Purpose |
+|--------|-------|--------|----------|---------|
+| GET | <span class="sb">`ping`</span> | any | <span class="sb">`Ping::ping`</span> | Health check |
+| GET | <span class="sb">`options`</span> | any | <span class="sb">`Settings::getOptions`</span> | Get all plugin options |
+| POST | <span class="sb">`options`</span> | options | <span class="sb">`Settings::saveChanges`</span> | Save settings |
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>Also includes:</p>
+<ul>
+  <li>Architecture overview (namespaces, auth patterns, nonce handling)</li>
+  <li>Capability access level definitions</li>
+  <li>Request/response format conventions</li>
+  <li>Common blocking issues (security plugins, CDN firewalls)</li>
+</ul>
+
+<p><strong>Why the agent needs this:</strong> When a PR modifies an API endpoint, the agent needs to know the auth requirements, expected request format, and which other endpoints interact with the same data.</p>
+
+<h4 id="database-schema-reference-database-schemamd">Database Schema Reference (<code class="language-plaintext highlighter-rouge">database-schema.md</code>)</h4>
+
+<p>Every custom table with full column definitions:</p>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+</pre></td><td class="rouge-code"><pre><span class="gu">### posts_table (Core)</span>
+
+| Column | Type | Default | Notes |
+|--------|------|---------|-------|
+| id | bigint(20) unsigned | AUTO_INCREMENT | PK |
+| post_id | bigint(20) unsigned | NOT NULL | FK (indexed) |
+| title | text | NULL | SEO title |
+| description | text | NULL | Meta description |
+| keywords | mediumtext | NULL | JSON |
+| seo_score | int(11) | 0 NOT NULL | 0-100 |
+| robots_default | tinyint(1) | 1 NOT NULL | boolean |
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>Also includes:</p>
+<ul>
+  <li>Options table entries with purpose and storage class</li>
+  <li>Meta key definitions</li>
+  <li>Migration history table</li>
+  <li>JSON field structures</li>
+</ul>
+
+<p><strong>Why the agent needs this:</strong> Database PRs need data integrity test cases. The agent needs to know column types (to test boundaries), JSON fields (to test structure), and migration history (to test upgrade paths).</p>
+
+<h4 id="template-variable-reference-smart-tagsmd">Template Variable Reference (<code class="language-plaintext highlighter-rouge">smart-tags.md</code>)</h4>
+
+<p>If your application has any kind of template variable or placeholder system, this doc catalogs them all:</p>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+</pre></td><td class="rouge-code"><pre><span class="gu">## Core Tags</span>
+
+<span class="gu">### Site-Level</span>
+
+| Tag | Description | HTML |
+|-----|-------------|------|
+| <span class="sb">`#site_title`</span> | Site title from settings | Yes |
+| <span class="sb">`#tagline`</span> | Site tagline | No |
+| <span class="sb">`#separator`</span> | Separator character | No |
+
+<span class="gu">### Content-Level</span>
+
+| Tag | Description |
+|-----|-------------|
+| <span class="sb">`#post_title`</span> | Original title of the current post |
+| <span class="sb">`#post_excerpt`</span> | Post excerpt or auto-generated |
+| <span class="sb">`#post_date`</span> | Publish date, localized |
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>Also includes:</p>
+<ul>
+  <li>Dynamic tag syntax (e.g., <code class="language-plaintext highlighter-rouge">#custom_field-name</code>)</li>
+  <li>Context definitions (which tags are available where)</li>
+  <li>Replacement logic and key files</li>
+  <li>Deprecated tags and their replacements</li>
+</ul>
+
+<p><strong>Why the agent needs this:</strong> Template variables are cross-cutting — they appear in meta titles, descriptions, schema, social tags, breadcrumbs, and RSS feeds. A bug in tag resolution affects multiple features.</p>
+
+<h4 id="settings-structure-map-settings-mapmd">Settings Structure Map (<code class="language-plaintext highlighter-rouge">settings-map.md</code>)</h4>
+
+<p>Complete settings tree with default values, types, and sanitization rules:</p>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+</pre></td><td class="rouge-code"><pre><span class="gu">## Settings Architecture</span>
+
+<span class="gu">### Options Storage</span>
+
+| Option Key | Purpose | Class |
+|-----------|---------|-------|
+| <span class="sb">`app_options`</span> | Main plugin settings | <span class="sb">`Options.php`</span> |
+| <span class="sb">`app_options_dynamic`</span> | Per-content-type settings | <span class="sb">`DynamicOptions.php`</span> |
+| <span class="sb">`app_options_internal`</span> | Internal state &amp; tokens | <span class="sb">`InternalOptions.php`</span> |
+
+<span class="gu">### Sanitization by Type</span>
+
+| Type | Sanitization |
+|------|-------------|
+| boolean | <span class="sb">`(bool) $value`</span> |
+| string | <span class="sb">`sanitize_text_field($value)`</span> |
+| html | <span class="sb">`sanitize_textarea_field($value)`</span> |
+| number | <span class="sb">`intval($value)`</span> |
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>Then the full settings tree with every key and its default value.</p>
+
+<p><strong>Why the agent needs this:</strong> Settings PRs need save/load tests, default value tests, and validation tests. The agent needs to know what type each setting is (to test boundaries) and what the defaults are (to test reset behavior).</p>
+
+<h4 id="feature-interaction--dependency-map-feature-interactionsmd">Feature Interaction &amp; Dependency Map (<code class="language-plaintext highlighter-rouge">feature-interactions.md</code>)</h4>
+
+<p>This is the most unique doc — it maps how features depend on each other:</p>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+</pre></td><td class="rouge-code"><pre><span class="gu">## Meta Output (Title, Description, Keywords)</span>
+
+Meta Output depends on:
+  ├── options.searchAppearance.global (siteTitle, metaDescription)
+  ├── options.searchAppearance.archives (author, date, search)
+  ├── tags.replaceTags() (template variable resolution)
+  ├── Post/Term Models (per-content overrides)
+  └── Filters: disable_meta, disable_title_rewrites
+
+Affects: Frontend <span class="nt">&lt;head&gt;</span>, search engine indexing, social sharing fallbacks
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+</pre></td><td class="rouge-code"><pre><span class="gu">## Schema Output (JSON-LD Structured Data)</span>
+
+Schema Output depends on:
+  ├── options.searchAppearance.global.schema (organization, site representation)
+  ├── tags.replaceTags() (variable resolution in schema values)
+  ├── meta.description (description helper)
+  ├── breadcrumbs (BreadcrumbList schema)
+  ├── Local Business addon (LocalBusiness schema via filters)
+  └── Filters: schema_graphs, schema_output, schema_disable
+
+Affects: Rich results in search, Knowledge Panel, breadcrumbs in SERPs
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p><strong>Why the agent needs this:</strong> When a PR touches the template variable engine, the agent needs to know that meta, schema, social, breadcrumbs, and RSS are all affected. This doc tells the agent what to include in “Regression Areas.”</p>
+
+<h4 id="qa-playbook-qa-playbookmd">QA Playbook (<code class="language-plaintext highlighter-rouge">qa-playbook.md</code>)</h4>
+
+<p>The baseline reference loaded for every PR analysis. Contains:</p>
+<ul>
+  <li>Security testing payloads (XSS, SQLi, CSRF) with platform-specific variants</li>
+  <li>Verification commands (curl-based checks for meta tags, schema, sitemaps, redirects)</li>
+  <li>Test case templates by change type</li>
+  <li>Priority classification guidelines</li>
+  <li>Environment matrix and common gotchas</li>
+  <li>Integration testing matrix</li>
+</ul>
+
+<p>This doc was covered in detail in the <a href="/blog-ai-qa-agent-claude-code">previous blog post</a>.</p>
+
+<hr />
+
+<h2 id="component-3-the-update-command-orchestrator">Component 3: The Update Command (Orchestrator)</h2>
+
+<p><strong>File:</strong> <code class="language-plaintext highlighter-rouge">.claude/commands/update-qa-docs.md</code></p>
+
+<p>This is the command that ties everything together. When you type <code class="language-plaintext highlighter-rouge">/update-qa-docs</code> in Claude Code, it orchestrates the full update pipeline.</p>
+
+<h3 id="command-definition">Command Definition</h3>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+</pre></td><td class="rouge-code"><pre><span class="nn">---</span>
+<span class="na">description</span><span class="pi">:</span> <span class="s">Re-extract codebase knowledge and update curated QA docs</span>
+<span class="na">argument-hint</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">target</span><span class="pi">]</span>
+<span class="na">allowed-tools</span><span class="pi">:</span> <span class="s">Bash, Read, Write, Edit, Glob, Grep, Agent</span>
+<span class="nn">---</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="the-update-flow">The Update Flow</h3>
+
+<p><strong>Step 1: Run the extraction script with diff mode</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+</pre></td><td class="rouge-code"><pre><span class="nb">cd</span> <span class="s2">"</span><span class="si">$(</span>git rev-parse <span class="nt">--show-toplevel</span><span class="si">)</span><span class="s2">"</span>
+.claude/scripts/extract-knowledge.sh all <span class="nt">--diff</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>This regenerates all raw extraction files and saves the previous versions to <code class="language-plaintext highlighter-rouge">.prev/</code> for comparison.</p>
+
+<p><strong>Step 2: Identify which curated docs need updating</strong></p>
+
+<p>The command uses a mapping table to know which raw files feed which curated docs:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Raw File(s)</th>
+      <th>Curated Doc</th>
+      <th>What to Update</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">raw/rest-routes.txt</code></td>
+      <td><code class="language-plaintext highlighter-rouge">docs/rest-api.md</code></td>
+      <td>New/removed/changed routes, access levels</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">raw/db-tables.txt</code> + <code class="language-plaintext highlighter-rouge">raw/migrations.txt</code></td>
+      <td><code class="language-plaintext highlighter-rouge">docs/database-schema.md</code></td>
+      <td>New tables, columns, migration entries</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">raw/smart-tags.txt</code></td>
+      <td><code class="language-plaintext highlighter-rouge">docs/smart-tags.md</code></td>
+      <td>New/removed tags, context changes</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">raw/settings-defaults.txt</code></td>
+      <td><code class="language-plaintext highlighter-rouge">docs/settings-map.md</code></td>
+      <td>New settings, changed defaults</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">raw/hooks-filters.txt</code> + <code class="language-plaintext highlighter-rouge">raw/capabilities.txt</code></td>
+      <td><code class="language-plaintext highlighter-rouge">docs/feature-interactions.md</code></td>
+      <td>New hooks, capabilities, dependency changes</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>If a raw file has no changes (diffing <code class="language-plaintext highlighter-rouge">.prev/</code> against current shows zero delta), its corresponding curated doc is skipped entirely.</p>
+
+<p><strong>Step 3: Generate the delta for each changed area</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td><td class="rouge-code"><pre>diff .claude/docs/raw/.prev/rest-routes.txt .claude/docs/raw/rest-routes.txt | <span class="nb">head</span> <span class="nt">-200</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>The command reads the delta output (just the added/removed lines) alongside the current curated doc.</p>
+
+<p><strong>Step 4: Surgically update the curated doc</strong></p>
+
+<p>This is where the AI shines. For each doc that needs updating, the command:</p>
+
+<ul>
+  <li><strong>Adds</strong> new entries (routes, tables, columns, tags, settings) matching the existing format and style</li>
+  <li><strong>Removes</strong> entries that no longer exist in the raw data</li>
+  <li><strong>Updates</strong> entries where details changed (access levels, defaults, column types)</li>
+  <li><strong>Preserves</strong> all existing structure, formatting, and section organization</li>
+  <li><strong>Does NOT rewrite</strong> sections that haven’t changed</li>
+</ul>
+
+<p>For migration history specifically, new version entries are appended at the bottom of the Migration History table using the same <code class="language-plaintext highlighter-rouge">| version | change |</code> format.</p>
+
+<p><strong>Step 5: Show a summary</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre></td><td class="rouge-code"><pre>Updated docs:
+- rest-api.md: +3 routes, -1 route
+- database-schema.md: +1 column (posts_table.new_col), +1 migration entry
+- smart-tags.md: no changes
+- settings-map.md: no changes
+- feature-interactions.md: +2 hooks
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p><strong>Step 6: Do NOT commit</strong></p>
+
+<p>The command explicitly does not commit. It updates the files and lets you review with <code class="language-plaintext highlighter-rouge">git diff</code> before deciding what to keep.</p>
+
+<h3 id="strict-formatting-rules">Strict Formatting Rules</h3>
+
+<p>The command enforces several rules to maintain doc quality:</p>
+
+<ol>
+  <li><strong>Match exact formatting style</strong> — If the existing doc uses <code class="language-plaintext highlighter-rouge">| col1 | col2 |</code> tables, new entries use the same format</li>
+  <li><strong>No temporal commentary</strong> — Never adds “Added on 2026-04-03” to entries. New entries look like they were always there</li>
+  <li><strong>Skip unchanged docs</strong> — If the delta is empty, don’t touch the curated doc</li>
+  <li><strong>Handle missing files gracefully</strong> — If a raw file or <code class="language-plaintext highlighter-rouge">.prev/</code> file is missing, skip and note in summary</li>
+</ol>
+
+<h3 id="selective-updates">Selective Updates</h3>
+
+<p>You can update just one area if you know what changed:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+</pre></td><td class="rouge-code"><pre><span class="c"># Update only the REST API reference</span>
+/update-qa-docs rest-routes
+
+<span class="c"># Update only the database schema reference</span>
+/update-qa-docs db-tables
+
+<span class="c"># Update everything</span>
+/update-qa-docs
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<hr />
+
+<h2 id="how-it-all-works-together">How It All Works Together</h2>
+
+<p>Here’s the complete flow:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+</pre></td><td class="rouge-code"><pre>Developer ships PRs with new endpoints, schema changes, settings...
+        │
+        ▼
+Maintainer runs: /update-qa-docs
+        │
+        ▼
+┌──────────────────────────────────┐
+│  extract-knowledge.sh all --diff │
+│                                  │
+│  1. Saves current raw/ to .prev/ │
+│  2. Scans entire codebase:      │
+│     • grep for route registrations│
+│     • grep for CREATE TABLE      │
+│     • grep for tag definitions   │
+│     • cat full options files     │
+│     • grep for capability checks │
+│     • grep for hooks/filters     │
+│     • cat migration classes      │
+│  3. Writes fresh raw/*.txt files │
+│  4. Reports: "3 files changed"   │
+└──────────┬───────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────┐
+│  Diff raw/ against .prev/        │
+│                                  │
+│  rest-routes.txt: 12 lines changed│
+│  db-tables.txt: 5 lines changed  │
+│  smart-tags.txt: no changes      │
+│  settings-defaults.txt: no changes│
+│  hooks-filters.txt: 3 lines changed│
+│  capabilities.txt: no changes    │
+│  migrations.txt: 8 lines changed │
+└──────────┬───────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────┐
+│  Update curated docs (AI)        │
+│                                  │
+│  rest-api.md:                    │
+│    + Added 2 new POST routes     │
+│    + Updated access level on 1   │
+│    - Removed 1 deprecated route  │
+│                                  │
+│  database-schema.md:             │
+│    + Added new_column to posts   │
+│    + Added migration entry v4.8  │
+│                                  │
+│  feature-interactions.md:        │
+│    + Added 2 new filter hooks    │
+│    + Updated dependency chain    │
+│                                  │
+│  smart-tags.md: SKIPPED          │
+│  settings-map.md: SKIPPED        │
+└──────────┬───────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────┐
+│  Summary output                  │
+│  Files left uncommitted for      │
+│  human review via git diff       │
+└──────────────────────────────────┘
+           │
+           ▼
+Next time /qa-pr runs, the agent reads updated docs
+and generates accurate test cases for new endpoints,
+new columns, new hooks, etc.
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<hr />
+
+<h2 id="step-by-step-implementation-guide">Step-by-Step Implementation Guide</h2>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+  <li><a href="https://claude.ai/code">Claude Code</a> installed</li>
+  <li>A codebase with patterns you can grep for (routes, models, settings, etc.)</li>
+</ul>
+
+<h3 id="step-1-identify-your-knowledge-categories">Step 1: Identify Your Knowledge Categories</h3>
+
+<p>Before writing any code, list the categories of knowledge your QA agent needs. Common ones:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>What to Extract</th>
+      <th>Why the Agent Needs It</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>API endpoints</td>
+      <td>Route registrations, HTTP methods, auth</td>
+      <td>API test cases: auth, validation, response format</td>
+    </tr>
+    <tr>
+      <td>Database schema</td>
+      <td>Table definitions, columns, types</td>
+      <td>Data integrity tests, boundary testing</td>
+    </tr>
+    <tr>
+      <td>Settings/config</td>
+      <td>Option keys, defaults, types</td>
+      <td>Save/load tests, default value tests</td>
+    </tr>
+    <tr>
+      <td>Permissions</td>
+      <td>Role checks, capability definitions</td>
+      <td>Access control tests by user role</td>
+    </tr>
+    <tr>
+      <td>Event system</td>
+      <td>Hooks, filters, event listeners</td>
+      <td>Cross-feature regression analysis</td>
+    </tr>
+    <tr>
+      <td>Migrations</td>
+      <td>Version entries, schema changes</td>
+      <td>Upgrade/downgrade test cases</td>
+    </tr>
+    <tr>
+      <td>Template system</td>
+      <td>Variables, placeholders, contexts</td>
+      <td>Cross-cutting feature tests</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Not every project needs all of these. Start with the 2-3 most relevant to your codebase.</p>
+
+<h3 id="step-2-create-the-directory-structure">Step 2: Create the Directory Structure</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td><td class="rouge-code"><pre><span class="nb">mkdir</span> <span class="nt">-p</span> .claude/scripts .claude/docs/raw/.prev .claude/commands
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="step-3-build-the-extraction-script">Step 3: Build the Extraction Script</h3>
+
+<p>Create <code class="language-plaintext highlighter-rouge">.claude/scripts/extract-knowledge.sh</code>:</p>
+
+<p>The script should:</p>
+
+<ol>
+  <li><strong>Accept target arguments</strong> — Allow extracting specific categories or <code class="language-plaintext highlighter-rouge">all</code></li>
+  <li><strong>Support diff mode</strong> — Save previous extraction to <code class="language-plaintext highlighter-rouge">.prev/</code> before overwriting</li>
+  <li><strong>Discover source directories</strong> — Auto-detect modules/addons in the repo</li>
+  <li><strong>Extract deep, not shallow</strong> — For each category, grep multiple patterns (registrations, usages, definitions, modifications)</li>
+  <li><strong>Report changes</strong> — Compare current vs previous extraction, print line counts</li>
+</ol>
+
+<p>The extraction functions are project-specific. Here’s the template:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+</pre></td><td class="rouge-code"><pre>extract_YOUR_CATEGORY<span class="o">()</span> <span class="o">{</span>
+    <span class="nb">local </span><span class="nv">outfile</span><span class="o">=</span><span class="s2">"</span><span class="nv">$OUTPUT_DIR</span><span class="s2">/your-category.txt"</span>
+    <span class="o">{</span>
+        <span class="nb">echo</span> <span class="s2">"# Category Name"</span>
+        <span class="nb">echo</span> <span class="s2">"# Extracted: </span><span class="si">$(</span><span class="nb">date</span> <span class="nt">-u</span> <span class="s1">'+%Y-%m-%d %H:%M:%S UTC'</span><span class="si">)</span><span class="s2">"</span>
+        <span class="nb">echo</span> <span class="s2">""</span>
+
+        <span class="nb">echo</span> <span class="s2">"============================================"</span>
+        <span class="nb">echo</span> <span class="s2">"PRIMARY PATTERN (e.g., route registrations)"</span>
+        <span class="nb">echo</span> <span class="s2">"============================================"</span>
+
+        <span class="k">for </span><span class="nb">dir </span><span class="k">in</span> <span class="s2">"</span><span class="k">${</span><span class="nv">ALL_DIRS</span><span class="p">[@]</span><span class="k">}</span><span class="s2">"</span><span class="p">;</span> <span class="k">do
+            </span><span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"your_pattern"</span> <span class="s2">"</span><span class="nv">$dir</span><span class="s2">/src/"</span> <span class="se">\</span>
+                <span class="nt">--include</span><span class="o">=</span><span class="s2">"*.php"</span> 2&gt;/dev/null <span class="o">||</span> <span class="nb">true
+        </span><span class="k">done
+
+        </span><span class="nb">echo</span> <span class="s2">""</span>
+        <span class="nb">echo</span> <span class="s2">"============================================"</span>
+        <span class="nb">echo</span> <span class="s2">"SECONDARY PATTERN (e.g., permission callbacks)"</span>
+        <span class="nb">echo</span> <span class="s2">"============================================"</span>
+
+        <span class="k">for </span><span class="nb">dir </span><span class="k">in</span> <span class="s2">"</span><span class="k">${</span><span class="nv">ALL_DIRS</span><span class="p">[@]</span><span class="k">}</span><span class="s2">"</span><span class="p">;</span> <span class="k">do
+            </span><span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"another_pattern"</span> <span class="s2">"</span><span class="nv">$dir</span><span class="s2">/src/"</span> <span class="se">\</span>
+                <span class="nt">--include</span><span class="o">=</span><span class="s2">"*.php"</span> 2&gt;/dev/null <span class="o">||</span> <span class="nb">true
+        </span><span class="k">done</span>
+
+    <span class="o">}</span> <span class="o">&gt;</span> <span class="s2">"</span><span class="nv">$outfile</span><span class="s2">"</span>
+    write_output <span class="s2">"</span><span class="nv">$outfile</span><span class="s2">"</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p><strong>Adapt patterns for your stack:</strong></p>
+
+<ul>
+  <li><strong>Express/Node:</strong> <code class="language-plaintext highlighter-rouge">grep -rn "router\.\(get\|post\|put\|delete\)" --include="*.ts"</code></li>
+  <li><strong>Django:</strong> <code class="language-plaintext highlighter-rouge">grep -rn "path(\|re_path(" --include="*.py"</code> for routes; <code class="language-plaintext highlighter-rouge">grep -rn "class.*models\.Model" --include="*.py"</code> for models</li>
+  <li><strong>Rails:</strong> <code class="language-plaintext highlighter-rouge">grep -rn "get\|post\|put\|delete\|resources\|resource" config/routes.rb</code> for routes</li>
+  <li><strong>Go:</strong> <code class="language-plaintext highlighter-rouge">grep -rn "HandleFunc\|Handle\|mux\.\(Get\|Post\)" --include="*.go"</code> for routes</li>
+  <li><strong>React/Vue:</strong> <code class="language-plaintext highlighter-rouge">grep -rn "createSlice\|defineStore\|useReducer" --include="*.ts"</code> for state management</li>
+</ul>
+
+<h3 id="step-4-create-the-curated-reference-documents">Step 4: Create the Curated Reference Documents</h3>
+
+<p>For each extraction category, create a curated markdown doc in <code class="language-plaintext highlighter-rouge">.claude/docs/</code>. Start by running the extraction script once, then manually structure the raw output into clean tables and sections.</p>
+
+<p>The curated doc should:</p>
+<ul>
+  <li>Use consistent markdown table format throughout</li>
+  <li>Group entries by feature area or module</li>
+  <li>Include contextual notes that raw grep can’t provide (e.g., “This endpoint requires WooCommerce to be active”)</li>
+  <li>Have a clear section hierarchy that the update command can target</li>
+</ul>
+
+<h3 id="step-5-create-the-update-command">Step 5: Create the Update Command</h3>
+
+<p>Create <code class="language-plaintext highlighter-rouge">.claude/commands/update-qa-docs.md</code>:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+</pre></td><td class="rouge-code"><pre><span class="nn">---</span>
+<span class="na">description</span><span class="pi">:</span> <span class="s">Re-extract codebase knowledge and update curated QA docs</span>
+<span class="na">argument-hint</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">target</span><span class="pi">]</span>
+<span class="na">allowed-tools</span><span class="pi">:</span> <span class="s">Bash, Read, Write, Edit, Glob, Grep, Agent</span>
+<span class="nn">---</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>The command should:</p>
+
+<ol>
+  <li><strong>Run the extraction script</strong> with <code class="language-plaintext highlighter-rouge">--diff</code> flag</li>
+  <li><strong>Define the raw-to-curated mapping</strong> — which raw files feed which curated docs</li>
+  <li><strong>For each changed raw file:</strong>
+a. Generate the delta: <code class="language-plaintext highlighter-rouge">diff .prev/file.txt file.txt</code>
+b. Read the delta and the current curated doc
+c. Instruct the AI to add/remove/update entries matching existing format</li>
+  <li><strong>Show a summary</strong> of what was updated</li>
+  <li><strong>Not commit</strong> — leave changes for human review</li>
+</ol>
+
+<p>Key rules to include in the command:</p>
+<ul>
+  <li>Match exact formatting style of existing doc</li>
+  <li>Never add temporal commentary (“Added on date”)</li>
+  <li>Skip docs where raw data hasn’t changed</li>
+  <li>Handle missing files gracefully</li>
+</ul>
+
+<h3 id="step-6-wire-it-into-your-workflow">Step 6: Wire It Into Your Workflow</h3>
+
+<p>Run <code class="language-plaintext highlighter-rouge">/update-qa-docs</code> on a regular cadence:</p>
+<ul>
+  <li>After merging a batch of PRs</li>
+  <li>Before a release cycle (to ensure QA docs are current)</li>
+  <li>When the QA agent produces test plans that seem incomplete</li>
+</ul>
+
+<hr />
+
+<h2 id="key-design-decisions-and-why">Key Design Decisions and Why</h2>
+
+<h3 id="1-raw--curated-two-layer-architecture">1. Raw + Curated: Two-Layer Architecture</h3>
+
+<p>The biggest design decision is separating raw extractions from curated docs.</p>
+
+<p><strong>Why not just use raw grep output directly?</strong> Because grep output is noisy, duplicated, and lacks context. A raw extraction might show <code class="language-plaintext highlighter-rouge">register_rest_route</code> appearing 5 times in different files — but the curated doc shows one clean table row with method, route, access level, and purpose.</p>
+
+<p><strong>Why not just maintain curated docs manually?</strong> Because manual maintenance drifts. Someone adds 3 new endpoints and forgets to update the doc. With raw extractions, the diff makes omissions obvious.</p>
+
+<p>The two-layer approach gives you <strong>truthful raw data</strong> (what the code actually contains) and <strong>useful curated data</strong> (what the AI agent can actually work with).</p>
+
+<h3 id="2-diff-based-updates-not-full-regeneration">2. Diff-Based Updates, Not Full Regeneration</h3>
+
+<p>The system diffs raw files against <code class="language-plaintext highlighter-rouge">.prev/</code> and only updates curated docs where changes exist. Full regeneration would risk losing hand-crafted context notes, reformatting sections unnecessarily, and creating noisy git diffs.</p>
+
+<p>Surgical updates mean your <code class="language-plaintext highlighter-rouge">git diff</code> after running the command shows exactly what’s new — making review fast and confident.</p>
+
+<h3 id="3-extract-from-source-not-from-prs">3. Extract From Source, Not From PRs</h3>
+
+<p>The script scans the actual codebase, not PR diffs or changelogs. This is deliberate:</p>
+<ul>
+  <li>PRs might not describe all changes accurately</li>
+  <li>Changelogs often omit internal refactors</li>
+  <li>The source code is the single source of truth</li>
+  <li>Running against HEAD captures cumulative changes across many PRs</li>
+</ul>
+
+<h3 id="4-multi-directory-scanning">4. Multi-Directory Scanning</h3>
+
+<p>The script auto-discovers addon/module directories with glob patterns. When someone adds a new addon, it’s automatically included in the next extraction without modifying the script.</p>
+
+<h3 id="5-no-auto-commit">5. No Auto-Commit</h3>
+
+<p>The command updates files but never commits. This forces human review of the changes, which catches:</p>
+<ul>
+  <li>False positives (grep matching a comment, not real code)</li>
+  <li>Context that needs manual addition (e.g., “this endpoint is deprecated”)</li>
+  <li>Formatting issues</li>
+</ul>
+
+<h3 id="6-selective-targeting">6. Selective Targeting</h3>
+
+<p>You can update just one doc area: <code class="language-plaintext highlighter-rouge">/update-qa-docs rest-routes</code>. This is faster for focused updates and avoids unnecessary diff processing.</p>
+
+<hr />
+
+<h2 id="customizing-for-your-project">Customizing for Your Project</h2>
+
+<h3 id="for-different-languagesframeworks">For Different Languages/Frameworks</h3>
+
+<p>The extraction script is the only part that needs language-specific customization. The curated docs and update command are framework-agnostic.</p>
+
+<p><strong>Python/Django:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+</pre></td><td class="rouge-code"><pre>extract_routes<span class="o">()</span> <span class="o">{</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"path(</span><span class="se">\|</span><span class="s2">re_path(</span><span class="se">\|</span><span class="s2">url("</span> <span class="nt">--include</span><span class="o">=</span><span class="s2">"*.py"</span> ...
+<span class="o">}</span>
+extract_models<span class="o">()</span> <span class="o">{</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"class.*models</span><span class="se">\.</span><span class="s2">Model"</span> <span class="nt">--include</span><span class="o">=</span><span class="s2">"*.py"</span> <span class="nt">-A</span> 20 ...
+<span class="o">}</span>
+extract_settings<span class="o">()</span> <span class="o">{</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"^[A-Z_]+ ="</span> settings/<span class="k">*</span>.py ...
+<span class="o">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p><strong>TypeScript/Express:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre></td><td class="rouge-code"><pre>extract_routes<span class="o">()</span> <span class="o">{</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"router</span><span class="se">\.\(</span><span class="s2">get</span><span class="se">\|</span><span class="s2">post</span><span class="se">\|</span><span class="s2">put</span><span class="se">\|</span><span class="s2">delete</span><span class="se">\|</span><span class="s2">patch</span><span class="se">\)</span><span class="s2">"</span> <span class="nt">--include</span><span class="o">=</span><span class="s2">"*.ts"</span> ...
+<span class="o">}</span>
+extract_models<span class="o">()</span> <span class="o">{</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"@Entity</span><span class="se">\|</span><span class="s2">@Table</span><span class="se">\|</span><span class="s2">schema</span><span class="se">\.</span><span class="s2">"</span> <span class="nt">--include</span><span class="o">=</span><span class="s2">"*.ts"</span> <span class="nt">-A</span> 10 ...
+<span class="o">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p><strong>Go:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre></td><td class="rouge-code"><pre>extract_routes<span class="o">()</span> <span class="o">{</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"HandleFunc</span><span class="se">\|</span><span class="s2">Handle</span><span class="se">\|\.</span><span class="s2">Get(</span><span class="se">\|\.</span><span class="s2">Post("</span> <span class="nt">--include</span><span class="o">=</span><span class="s2">"*.go"</span> ...
+<span class="o">}</span>
+extract_models<span class="o">()</span> <span class="o">{</span>
+    <span class="nb">grep</span> <span class="nt">-rn</span> <span class="s2">"type.*struct"</span> <span class="nt">--include</span><span class="o">=</span><span class="s2">"*.go"</span> <span class="nt">-A</span> 20 ...
+<span class="o">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="for-smaller-projects">For Smaller Projects</h3>
+
+<p>If you only have 1-2 knowledge categories that matter (e.g., just API endpoints and database schema), skip the others. Start minimal and add categories as the agent’s blind spots become apparent.</p>
+
+<h3 id="for-monorepos">For Monorepos</h3>
+
+<p>The multi-directory scanning pattern (<code class="language-plaintext highlighter-rouge">for dir in "${ALL_DIRS[@]}"</code>) works naturally with monorepos. Just adjust the directory discovery glob:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+</pre></td><td class="rouge-code"><pre><span class="c"># Microservices monorepo</span>
+<span class="k">for </span><span class="nb">dir </span><span class="k">in</span> <span class="s2">"</span><span class="nv">$REPO_ROOT</span><span class="s2">"</span>/services/<span class="k">*</span>/<span class="p">;</span> <span class="k">do
+    </span>ALL_DIRS+<span class="o">=(</span><span class="s2">"</span><span class="nv">$dir</span><span class="s2">"</span><span class="o">)</span>
+<span class="k">done</span>
+
+<span class="c"># Package monorepo</span>
+<span class="k">for </span><span class="nb">dir </span><span class="k">in</span> <span class="s2">"</span><span class="nv">$REPO_ROOT</span><span class="s2">"</span>/packages/<span class="k">*</span>/<span class="p">;</span> <span class="k">do
+    </span>ALL_DIRS+<span class="o">=(</span><span class="s2">"</span><span class="nv">$dir</span><span class="s2">"</span><span class="o">)</span>
+<span class="k">done</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="for-ci-integration">For CI Integration</h3>
+
+<p>You can run the extraction script in CI to detect doc drift:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+</pre></td><td class="rouge-code"><pre><span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Check QA docs are current</span>
+  <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+    <span class="s">.claude/scripts/extract-knowledge.sh all --diff</span>
+    <span class="s"># Fail if any raw file has changes not reflected in curated docs</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<hr />
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>An AI QA agent without up-to-date knowledge is like a QA engineer who hasn’t read the latest PRs. The test plans look reasonable but miss new endpoints, new columns, new settings, and new interaction patterns.</p>
+
+<p>The self-updating knowledge base solves this with a simple architecture:</p>
+
+<ol>
+  <li><strong>An extraction script</strong> that scans source code and produces raw data files</li>
+  <li><strong>Curated reference documents</strong> structured for AI agent consumption</li>
+  <li><strong>A diff-based update command</strong> that surgically patches curated docs when the raw data changes</li>
+</ol>
+
+<p>The entire system runs with one command (<code class="language-plaintext highlighter-rouge">/update-qa-docs</code>), takes seconds, and produces a clean <code class="language-plaintext highlighter-rouge">git diff</code> you can review before committing.</p>
+
+<p>The raw extraction script is the only project-specific piece — and it’s just organized grep commands. The curated docs and update command work the same regardless of your language, framework, or architecture. Start with the 2-3 knowledge categories most critical to your project, build the extraction patterns, and iterate from there.</p>
+
+<p>When your knowledge base stays current, your AI agent stays accurate — and that means better test plans, fewer missed edge cases, and less manual QA work for your team.</p>
+
+            </div>
+
+            <!-- Rating -->
+            
+
+            <!-- Post Date -->
+            <p>
+            <small>
+                <span class="post-date"><time class="post-date" datetime="2026-04-03">03 Apr 2026</time></span>           
+                
+                </small>
+            </p>
+
+            <!-- Post Categories -->
+            <div class="after-post-cats">
+                <ul class="tags mb-4">
+                    
+                    
+                    <li>
+                        <a class="smoothscroll" href="/categories#AI">AI</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/categories#Developer-Tooling">Developer Tooling</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/categories#Knowledge-Management">Knowledge Management</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/categories#QA">QA</a>
+                    </li>
+                    
+                </ul>
+            </div>
+            <!-- End Categories -->
+
+            <!-- Post Tags -->
+            <div class="after-post-tags">
+                <ul class="tags">
+                    
+                    
+                    <li>
+                        <a class="smoothscroll" href="/tags#ai-agent">#ai-agent</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/tags#automation">#automation</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/tags#claude-code">#claude-code</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/tags#developer-tools">#developer-tools</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/tags#knowledge-base">#knowledge-base</a>
+                    </li>
+                    
+                </ul>
+            </div>
+            <!-- End Tags -->
+
+            <!-- Buy me a coffee -->
+            <div class="post-support" style="margin-top:2rem;padding:1.5rem 0;border-top:1px solid rgba(0,0,0,0.1);font-size:0.95rem;color:#555;">
+                If you found this post helpful, consider <a href="https://buymeacoffee.com/islammdshariful" target="_blank" style="color:#A69990;font-weight:600;">buying me a coffee</a>. It keeps me writing!
+            </div>
+
+            <!-- Prev/Next -->
+            <div class="row PageNavigation d-flex justify-content-between font-weight-bold">
+            
+            <a class="prev d-block col-md-6" href="/blog-ai-qa-agent-claude-code/"> &laquo; How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code</a>
+            
+            
+            <div class="clearfix"></div>
+            </div>
+            <!-- End Categories -->
+
+        </div>
+        <!-- End Post -->
+
+    </div>
+</div>
+<!-- End Article
+================================================== -->
+
+
+<!-- Review with LD-JSON, adapt it for your needs if you like, but make sure you test the generated HTML source code first: 
+https://search.google.com/structured-data/testing-tool/u/0/
+================================================== -->
+
+</div>
+
+
+    
+</div>
+
+</div> <!-- /.site-content -->
+
+<!-- Begin Footer
+================================================== -->
+<footer class="footer">
+    <div class="container text-center">
+        <div class="footer-links mb-2">
+            <a href="/">Home</a>
+            <span class="footer-sep">·</span>
+            <a href="/categories">Categories</a>
+            <span class="footer-sep">·</span>
+            <a href="/about-me">About Me</a>
+            <span class="footer-sep">·</span>
+            <a href="https://github.com/islammdshariful" target="_blank">GitHub</a>
+            <span class="footer-sep">·</span>
+            <a href="https://www.linkedin.com/in/islamdshariful/" target="_blank">LinkedIn</a>
+        </div>
+        <p class="footer-copy">© 2026 islammdshariful.</p>
+    </div>
+</footer>
+<!-- End Footer
+================================================== -->
+
+<!-- Scripts
+================================================== -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+
+<script src="/assets/js/mediumish.js"></script>
+
+
+
+<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
+
+<script src="/assets/js/dotgrid.js"></script>
+
+<script src="/assets/js/darkmode.js"></script>
+
+</body>
+</html>

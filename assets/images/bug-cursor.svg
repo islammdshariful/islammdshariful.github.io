@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="28" viewBox="0 0 64 56">
+  <g fill="none" stroke="#222" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Antennae -->
+    <line x1="24" y1="10" x2="19" y2="2" stroke-width="2.5"/>
+    <line x1="40" y1="10" x2="45" y2="2" stroke-width="2.5"/>
+
+    <!-- Head -->
+    <path d="M22 14 Q22 8 32 8 Q42 8 42 14 Z" fill="#222" stroke-width="0"/>
+    <!-- Eyes -->
+    <circle cx="27" cy="12" r="3" fill="none" stroke="white" stroke-width="1.5"/>
+    <circle cx="27" cy="12" r="1" fill="white" stroke="none"/>
+    <circle cx="37" cy="12" r="3" fill="none" stroke="white" stroke-width="1.5"/>
+    <circle cx="37" cy="12" r="1" fill="white" stroke="none"/>
+
+    <!-- Body outline (shorter) -->
+    <path d="M18 16 Q18 14 22 14 L42 14 Q46 14 46 16 L46 38 Q46 48 32 48 Q18 48 18 38 Z" stroke-width="2.5"/>
+
+    <!-- Left legs -->
+    <line x1="18" y1="22" x2="10" y2="18" stroke-width="2.5"/>
+    <line x1="18" y1="30" x2="10" y2="30" stroke-width="2.5"/>
+    <line x1="18" y1="38" x2="10" y2="42" stroke-width="2.5"/>
+
+    <!-- Right legs -->
+    <line x1="46" y1="22" x2="54" y2="18" stroke-width="2.5"/>
+    <line x1="46" y1="30" x2="54" y2="30" stroke-width="2.5"/>
+    <line x1="46" y1="38" x2="54" y2="42" stroke-width="2.5"/>
+
+    <!-- Circuit traces on body -->
+    <circle cx="26" cy="26" r="3" stroke="#222" stroke-width="1.8"/>
+    <circle cx="26" cy="26" r="1" fill="#222" stroke="none"/>
+    <line x1="26" y1="29" x2="26" y2="36" stroke="#222" stroke-width="1.8"/>
+    <circle cx="26" cy="38" r="2.5" stroke="#222" stroke-width="1.8"/>
+    <circle cx="26" cy="38" r="0.8" fill="#222" stroke="none"/>
+
+    <circle cx="38" cy="22" r="3" stroke="#222" stroke-width="1.8"/>
+    <circle cx="38" cy="22" r="1" fill="#222" stroke="none"/>
+    <path d="M38 25 L38 30 Q38 34 34 36" stroke="#222" stroke-width="1.8"/>
+    <circle cx="38" cy="34" r="2.5" stroke="#222" stroke-width="1.8"/>
+    <circle cx="38" cy="34" r="0.8" fill="#222" stroke="none"/>
+    <line x1="38" y1="36.5" x2="38" y2="43" stroke="#222" stroke-width="1.8"/>
+
+    <line x1="29" y1="26" x2="35" y2="22" stroke="#222" stroke-width="1.8"/>
+  </g>
+</svg>

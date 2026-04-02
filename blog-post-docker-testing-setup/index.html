@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<link rel="icon" href="/assets/images/favicon.ico">
+
+<title>How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing | islammdshariful</title>
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing | islammdshariful</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing" />
+<meta name="author" content="shariful" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Testing a plugin across multiple configurations – Lite vs Pro, fresh installs vs existing sites – is painful without a reproducible environment. I built a Docker-based multi-site testing setup that spins up four isolated instances, manages plugin deployment, imports pre-configured databases, and integrates with Playwright for end-to-end testing." />
+<meta property="og:description" content="Testing a plugin across multiple configurations – Lite vs Pro, fresh installs vs existing sites – is painful without a reproducible environment. I built a Docker-based multi-site testing setup that spins up four isolated instances, manages plugin deployment, imports pre-configured databases, and integrates with Playwright for end-to-end testing." />
+<link rel="canonical" href="https://islammdshariful.github.io/blog-post-docker-testing-setup/" />
+<meta property="og:url" content="https://islammdshariful.github.io/blog-post-docker-testing-setup/" />
+<meta property="og:site_name" content="islammdshariful" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-03-26T00:00:00+06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"shariful"},"dateModified":"2026-03-26T00:00:00+06:00","datePublished":"2026-03-26T00:00:00+06:00","description":"Testing a plugin across multiple configurations – Lite vs Pro, fresh installs vs existing sites – is painful without a reproducible environment. I built a Docker-based multi-site testing setup that spins up four isolated instances, manages plugin deployment, imports pre-configured databases, and integrates with Playwright for end-to-end testing.","headline":"How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing","mainEntityOfPage":{"@type":"WebPage","@id":"https://islammdshariful.github.io/blog-post-docker-testing-setup/"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://islammdshariful.github.io/assets/images/logo.png"},"name":"shariful"},"url":"https://islammdshariful.github.io/blog-post-docker-testing-setup/"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    
+<link href="/assets/css/screen.css" rel="stylesheet">
+
+<link href="/assets/css/main.css" rel="stylesheet">
+
+<script src="/assets/js/jquery.min.js"></script>
+
+</head>
+
+
+
+
+<body class="layout-post">
+	<!-- defer loading of font and font awesome -->
+	<noscript id="deferred-styles">
+		<link href="https://fonts.googleapis.com/css?family=Righteous%7CMerriweather:300,300i,400,400i,700,700i" rel="stylesheet">
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+	</noscript>
+
+
+<!-- Begin Menu Navigation
+================================================== -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top mediumnavigation nav-down">
+
+    <div class="container pr-0">
+
+    <!-- Search icon (left) -->
+    <div class="nav-left-actions">
+        <div class="nav-search-wrap">
+            <div class="nav-search">
+                <span class="nav-search-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <script src="/assets/js/lunr.js"></script>
+
+
+<style>
+    #lunrsearchresults {
+        position: fixed;
+        top: 60px;
+        left: 15px;
+        width: 400px;
+        min-height: 100px;
+        max-height: 70vh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        z-index: 9999;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        padding: 12px 16px;
+        opacity: 0;
+        transform: translateY(-10px) scale(0.97);
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    #lunrsearchresults.visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+    }
+    /* Custom scrollbar */
+    #lunrsearchresults::-webkit-scrollbar {
+        width: 6px;
+    }
+    #lunrsearchresults::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #lunrsearchresults::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 3px;
+    }
+    #lunrsearchresults::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
+    }
+    #lunrsearchresults ul { list-style: none; padding: 0; margin: 0; }
+    @media (max-width: 991px) {
+        #lunrsearchresults {
+            position: fixed;
+            top: 60px;
+            left: 15px;
+            right: 15px;
+            width: auto;
+        }
+    }
+    .lunrsearchresult .title {color: #A69990;}
+    .lunrsearchresult .url {color: silver; font-size: 0.8rem;}
+    .lunrsearchresult a {display: block; color: #777; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05);}
+    .lunrsearchresult a:hover, .lunrsearchresult a:focus {text-decoration: none;}
+    .lunrsearchresult a:hover .title {text-decoration: underline;}
+</style>
+
+
+<form class="bd-search" onSubmit="return lunr_search(document.getElementById('lunrsearch').value);">
+    <input type="text" class="form-control text-small launch-modal-search" id="lunrsearch" name="q" maxlength="255" value="" placeholder="Type and enter..."/>
+</form>
+
+<div id="lunrsearchresults">
+    <ul></ul>
+</div>
+
+<script src="/assets/js/lunrsearchengine.js"></script>
+<script>
+(function() {
+  var icon = document.querySelector('.nav-search-icon');
+  var search = document.querySelector('.nav-search');
+  var input = document.getElementById('lunrsearch');
+
+  icon.addEventListener('click', function(e) {
+    e.stopPropagation();
+    search.classList.toggle('active');
+    if (search.classList.contains('active')) {
+      input.focus();
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.nav-search')) {
+      search.classList.remove('active');
+    }
+  });
+})();
+</script>
+            </div>
+        </div>
+    </div>
+
+    <div class="navbar-nav-always" id="navbarMediumish">
+
+        <!-- Begin Menu (centered) -->
+        <ul class="navbar-nav mx-auto">
+
+            
+            <li class="nav-item">
+            
+            <a class="nav-link" href="/">Home</a>
+            </li>
+
+            <li class="nav-item">
+            <a class="nav-link" href="/categories">Categories</a>
+            </li>
+
+            <li class="nav-item">
+            <a class="nav-link" href="/about-me">About Me</a>
+            </li>
+
+        </ul>
+        <!-- End Menu -->
+
+    </div>
+
+    <!-- Dark mode toggle (right) -->
+    <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+
+    </div>
+
+    </div>
+</nav>
+<!-- End Navigation
+================================================== -->
+
+<div class="site-content">
+
+<div class="container">
+
+
+
+<!-- Content
+================================================== -->
+<div class="main-content">
+    <!-- Begin Article
+================================================== -->
+<div class="container">
+    <div class="row">
+
+        <!-- Post -->
+        
+
+        <div class="col-md-10 mx-auto">
+            <div class="mainheading">
+
+                <!-- Author Box -->
+                
+                <div class="row post-top-meta">
+                    <div class="col-xs-12 col-md-3 col-lg-2 text-center text-md-left mb-4 mb-md-0">
+                        
+                        <img class="author-thumb" src="/assets/images/avatar.jpg" alt="islammdshariful">
+                        
+                    </div>
+                    <div class="col-xs-12 col-md-9 col-lg-10 text-center text-md-left">
+                        <a target="_blank" class="link-dark" href="">islammdshariful</a>
+                        <br/><span class="author-description">QA Engineer. I write about Playwright, automation, and AI-driven QA workflows.</span>
+                    </div>
+                </div>
+                
+
+                <!-- Post Title -->
+                <h1 class="posttitle">How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing</h1>
+
+            </div>
+
+            <!-- Adsense if enabled from _config.yml (change your pub id and slot) -->
+            
+            <!-- End Adsense -->
+
+            <!-- Post Featured Image -->
+            
+            <!-- End Featured Image -->
+
+            <!-- Post Content -->
+            <div class="article-post">
+                <!-- Toc if any -->
+                
+                <!-- End Toc -->
+                <p>Testing a plugin across multiple configurations – Lite vs Pro, fresh installs vs existing sites – is painful without a reproducible environment. I built a Docker-based multi-site testing setup that spins up four isolated instances, manages plugin deployment, imports pre-configured databases, and integrates with Playwright for end-to-end testing.</p>
+
+<p>In this guide, I’ll walk you through every piece of the system so you can adapt it for your own projects.</p>
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+<ol>
+  <li><a href="#the-problem-why-you-need-this">The Problem: Why You Need This</a></li>
+  <li><a href="#architecture-overview">Architecture Overview</a></li>
+  <li><a href="#project-structure">Project Structure</a></li>
+  <li><a href="#docker-compose-defining-the-multi-site-stack">Docker Compose: Defining the Multi-Site Stack</a></li>
+  <li><a href="#the-override-file-local-vs-ci-environments">The Override File: Local vs CI Environments</a></li>
+  <li><a href="#the-management-script-automating-everything">The Management Script: Automating Everything</a></li>
+  <li><a href="#mu-plugins-custom-rest-api-helpers-for-testing">MU-Plugins: Custom REST API Helpers for Testing</a></li>
+  <li><a href="#environment-configuration">Environment Configuration</a></li>
+  <li><a href="#integrating-with-playwright-for-e2e-tests">Integrating with Playwright for E2E Tests</a></li>
+  <li><a href="#running-the-setup-step-by-step">Running the Setup Step by Step</a></li>
+  <li><a href="#cicd-integration-with-buildkite">CI/CD Integration with Buildkite</a></li>
+  <li><a href="#troubleshooting-common-issues">Troubleshooting Common Issues</a></li>
+</ol>
+
+<hr />
+
+<h2 id="the-problem-why-you-need-this">The Problem: Why You Need This</h2>
+
+<p>If you develop plugins, you know the testing challenge:</p>
+
+<ul>
+  <li><strong>Lite vs Pro versions</strong> behave differently and load different code paths.</li>
+  <li><strong>Fresh installs</strong> need to work flawlessly, but so do <strong>upgrades from older versions</strong> with existing data.</li>
+  <li>Manual testing on a single local application site cannot cover these scenarios simultaneously.</li>
+  <li>Your CI pipeline needs the exact same environment your local machine uses.</li>
+</ul>
+
+<p>I needed a solution that could:</p>
+
+<ul>
+  <li>Run <strong>four application sites simultaneously</strong> (Lite New, Lite Old, Pro New, Pro Old).</li>
+  <li>Each site gets its <strong>own database</strong>, its own <strong>port</strong>, and only the <strong>plugins it should have</strong>.</li>
+  <li>Support <strong>database imports</strong> for “old” sites to simulate upgrades.</li>
+  <li>Work identically on <strong>local machines and CI servers</strong>.</li>
+  <li>Be manageable through <strong>simple CLI commands</strong>.</li>
+</ul>
+
+<hr />
+
+<h2 id="architecture-overview">Architecture Overview</h2>
+
+<p>Here’s what the final architecture looks like:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+</pre></td><td class="rouge-code"><pre>                    ┌─────────────────────────────────────────┐
+                    │            manage.js (Bun)               │
+                    │   CLI for init/start/stop/reset/clean    │
+                    └────────────────┬────────────────────────┘
+                                     │
+                    ┌────────────────▼────────────────────────┐
+                    │         docker-compose.yml               │
+                    │    + docker-compose.override.yml (local) │
+                    └────────────────┬────────────────────────┘
+                                     │
+        ┌────────────┬───────────────┼───────────────┬────────────┐
+        │            │               │               │            │
+   ┌────▼────┐  ┌────▼────┐   ┌─────▼────┐   ┌─────▼────┐  ┌────▼────┐
+   │Lite-New │  │Lite-Old │   │ Pro-New  │   │ Pro-Old  │  │phpMyAdmin│
+   │ :8083   │  │ :8082   │   │  :8081   │   │  :8080   │  │  :8084   │
+   │ WP+DB   │  │ WP+DB   │   │  WP+DB   │   │  WP+DB   │  │  (tool)  │
+   │ +WP-CLI │  │ +WP-CLI │   │  +WP-CLI │   │  +WP-CLI │  └──────────┘
+   └─────────┘  └─────────┘   └──────────┘   └──────────┘
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>Each site is a trio of containers:</p>
+
+<ol>
+  <li><strong>MariaDB</strong> – the database.</li>
+  <li><strong>application</strong> – the PHP/Apache web server.</li>
+  <li><strong>WP-CLI</strong> – a utility container for running application CLI commands.</li>
+</ol>
+
+<hr />
+
+<h2 id="project-structure">Project Structure</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+</pre></td><td class="rouge-code"><pre>_e2e-tests/
+├── docker/
+│   ├── docker-compose.yml              # Main service definitions
+│   ├── docker-compose.override.yml     # Local dev volume mounts
+│   ├── manage.js                       # Bun-powered management CLI
+│   ├── conf/
+│   │   └── uploads.ini                 # PHP upload configuration
+│   ├── data/
+│   │   └── pro-old.sql                 # Database dump for "old" sites
+│   ├── mu-plugins/
+│   │   └── test-automation-helpers.php # REST API helpers for testing
+│   └── plugins/                        # Downloaded plugin builds
+│       ├── my-plugin/
+│       ├── my-plugin-pro/
+│       ├── plugin-module-a/
+│       ├── plugin-module-b/
+│       └── ... (more addons)
+├── tests/
+│   └── e2e/                            # Playwright test files
+├── playwright.config.js
+├── package.json
+├── .env                                # Environment configuration
+└── run-tests.js                        # Test runner wrapper
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<hr />
+
+<h2 id="docker-compose-defining-the-multi-site-stack">Docker Compose: Defining the Multi-Site Stack</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">docker-compose.yml</code> file is the backbone of the setup. Each site follows the same pattern: a MariaDB database, a application container, and a WP-CLI utility container. Here’s the key design decisions:</p>
+
+<h3 id="using-docker-compose-profiles">Using Docker Compose Profiles</h3>
+
+<p>Instead of starting all four sites every time, I use <strong>Docker Compose profiles</strong> to selectively start only what you need:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+</pre></td><td class="rouge-code"><pre><span class="na">services</span><span class="pi">:</span>
+  <span class="na">db-lite-new</span><span class="pi">:</span>
+    <span class="na">image</span><span class="pi">:</span> <span class="s">mariadb:latest</span>
+    <span class="na">environment</span><span class="pi">:</span>
+      <span class="na">MYSQL_DATABASE</span><span class="pi">:</span> <span class="s">wordpress_lite_new</span>
+      <span class="na">MYSQL_USER</span><span class="pi">:</span> <span class="s">wordpress</span>
+      <span class="na">MYSQL_PASSWORD</span><span class="pi">:</span> <span class="s">wordpress</span>
+      <span class="na">MYSQL_ROOT_PASSWORD</span><span class="pi">:</span> <span class="s">somewordpress</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">db_data_lite_new:/var/lib/mysql</span>
+    <span class="na">command</span><span class="pi">:</span> <span class="s">--default-authentication-plugin=mysql_native_password</span>
+    <span class="na">cap_add</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">SYS_NICE</span>
+    <span class="na">profiles</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">lite-new</span>
+      <span class="pi">-</span> <span class="s">all</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">profiles</code> field means this container only starts when you explicitly request the <code class="language-plaintext highlighter-rouge">lite-new</code> or <code class="language-plaintext highlighter-rouge">all</code> profile. This keeps resource usage low during development when you only need one or two sites.</p>
+
+<h3 id="application-container-configuration">application Container Configuration</h3>
+
+<p>Each application container maps to a unique host port and connects to its own database:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre></td><td class="rouge-code"><pre>  <span class="na">wordpress-lite-new</span><span class="pi">:</span>
+    <span class="na">image</span><span class="pi">:</span> <span class="s">wordpress:latest</span>
+    <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s2">"</span><span class="s">${LITE_NEW_PORT:-8083}:80"</span>
+    <span class="na">environment</span><span class="pi">:</span>
+      <span class="na">WORDPRESS_DB_HOST</span><span class="pi">:</span> <span class="s">db-lite-new</span>
+      <span class="na">WORDPRESS_DB_USER</span><span class="pi">:</span> <span class="s">wordpress</span>
+      <span class="na">WORDPRESS_DB_PASSWORD</span><span class="pi">:</span> <span class="s">wordpress</span>
+      <span class="na">WORDPRESS_DB_NAME</span><span class="pi">:</span> <span class="s">wordpress_lite_new</span>
+      <span class="na">PHP_MEMORY_LIMIT</span><span class="pi">:</span> <span class="s">512M</span>
+      <span class="na">PHP_OPCACHE_VALIDATE_TIMESTAMPS</span><span class="pi">:</span> <span class="m">0</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">wordpress_data_lite_new:/var/www/html:cached</span>
+      <span class="pi">-</span> <span class="s">./data:/data/:cached</span>
+      <span class="pi">-</span> <span class="s">./conf/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini</span>
+    <span class="na">depends_on</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">db-lite-new</span>
+    <span class="na">profiles</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">lite-new</span>
+      <span class="pi">-</span> <span class="s">all</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>Key points:</p>
+
+<ul>
+  <li><strong>Dynamic ports</strong> via environment variables (<code class="language-plaintext highlighter-rouge">${LITE_NEW_PORT:-8083}</code>) with sensible defaults.</li>
+  <li><strong>Shared <code class="language-plaintext highlighter-rouge">/data</code> volume</strong> lets you mount SQL dumps accessible from inside every container.</li>
+  <li><strong>Custom <code class="language-plaintext highlighter-rouge">uploads.ini</code></strong> increases PHP upload limits for testing large file uploads:</li>
+</ul>
+
+<div class="language-ini highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+</pre></td><td class="rouge-code"><pre><span class="py">file_uploads</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">On</span>
+<span class="py">upload_max_filesize</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">128M</span>
+<span class="py">post_max_size</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">128M</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="wp-cli-sidecar-containers">WP-CLI Sidecar Containers</h3>
+
+<p>Each site also gets a WP-CLI container for automated application administration:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+</pre></td><td class="rouge-code"><pre>  <span class="na">wpcli-lite-new</span><span class="pi">:</span>
+    <span class="na">image</span><span class="pi">:</span> <span class="s">wordpress:cli</span>
+    <span class="na">entrypoint</span><span class="pi">:</span> <span class="pi">[</span><span class="s2">"</span><span class="s">wp"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">--allow-root"</span><span class="pi">]</span>
+    <span class="na">environment</span><span class="pi">:</span>
+      <span class="na">WORDPRESS_DB_HOST</span><span class="pi">:</span> <span class="s">db-lite-new</span>
+      <span class="na">WORDPRESS_DB_USER</span><span class="pi">:</span> <span class="s">wordpress</span>
+      <span class="na">WORDPRESS_DB_PASSWORD</span><span class="pi">:</span> <span class="s">wordpress</span>
+      <span class="na">WORDPRESS_DB_NAME</span><span class="pi">:</span> <span class="s">wordpress_lite_new</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">wordpress_data_lite_new:/var/www/html:cached</span>
+      <span class="pi">-</span> <span class="s">./data:/data/:cached</span>
+    <span class="na">depends_on</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">wordpress-lite-new</span>
+      <span class="pi">-</span> <span class="s">db-lite-new</span>
+    <span class="na">profiles</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">lite-new</span>
+      <span class="pi">-</span> <span class="s">all</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>This container shares the same application volume, so WP-CLI operates on the same filesystem as the running application site. The <code class="language-plaintext highlighter-rouge">entrypoint</code> is set to <code class="language-plaintext highlighter-rouge">wp --allow-root</code> so every <code class="language-plaintext highlighter-rouge">docker compose run</code> command becomes a WP-CLI command automatically.</p>
+
+<h3 id="phpmyadmin-for-database-inspection">phpMyAdmin for Database Inspection</h3>
+
+<p>A bonus service for debugging database issues:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+</pre></td><td class="rouge-code"><pre>  <span class="na">phpmyadmin</span><span class="pi">:</span>
+    <span class="na">image</span><span class="pi">:</span> <span class="s">phpmyadmin/phpmyadmin:latest</span>
+    <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s2">"</span><span class="s">8084:80"</span>
+    <span class="na">environment</span><span class="pi">:</span>
+      <span class="na">PMA_HOSTS</span><span class="pi">:</span> <span class="s">db-lite-new,db-lite-old,db-pro-new,db-pro-old</span>
+    <span class="na">profiles</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">tools</span>
+      <span class="pi">-</span> <span class="s">all</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>It connects to all four databases through the <code class="language-plaintext highlighter-rouge">PMA_HOSTS</code> variable, so you can switch between them from a single phpMyAdmin interface.</p>
+
+<h3 id="named-volumes">Named Volumes</h3>
+
+<p>All data is persisted in Docker named volumes:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+</pre></td><td class="rouge-code"><pre><span class="na">volumes</span><span class="pi">:</span>
+  <span class="na">wordpress_data_lite_new</span><span class="pi">:</span>
+  <span class="na">db_data_lite_new</span><span class="pi">:</span>
+  <span class="na">wordpress_data_lite_old</span><span class="pi">:</span>
+  <span class="na">db_data_lite_old</span><span class="pi">:</span>
+  <span class="na">wordpress_data_pro_new</span><span class="pi">:</span>
+  <span class="na">db_data_pro_new</span><span class="pi">:</span>
+  <span class="na">wordpress_data_pro_old</span><span class="pi">:</span>
+  <span class="na">db_data_pro_old</span><span class="pi">:</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>This means stopping and restarting containers preserves your application installations and databases. Use <code class="language-plaintext highlighter-rouge">bun run site:cleanup</code> to wipe everything and start fresh.</p>
+
+<hr />
+
+<h2 id="the-override-file-local-vs-ci-environments">The Override File: Local vs CI Environments</h2>
+
+<p>This is one of the most important design decisions. The <code class="language-plaintext highlighter-rouge">docker-compose.override.yml</code> file is <strong>automatically merged</strong> by Docker Compose when running locally, but <strong>explicitly excluded</strong> in CI.</p>
+
+<h3 id="what-the-override-file-does">What the Override File Does</h3>
+
+<p>For <strong>local development</strong>, it bind-mounts your actual plugin source code into the containers:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+</pre></td><td class="rouge-code"><pre><span class="na">services</span><span class="pi">:</span>
+  <span class="c1"># Lite sites: Mount only the free plugin</span>
+  <span class="na">wordpress-lite-new</span><span class="pi">:</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">./plugins/my-plugin:/var/www/html/wp-content/plugins/my-plugin:delegated</span>
+      <span class="pi">-</span> <span class="s">./mu-plugins:/var/www/html/wp-content/mu-plugins:delegated</span>
+
+  <span class="c1"># Pro sites: Mount all pro plugins individually</span>
+  <span class="na">wordpress-pro-new</span><span class="pi">:</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">./plugins/my-plugin:/var/www/html/wp-content/plugins/my-plugin:delegated</span>
+      <span class="pi">-</span> <span class="s">./plugins/my-plugin-pro:/var/www/html/wp-content/plugins/my-plugin-pro:delegated</span>
+      <span class="pi">-</span> <span class="s">./plugins/plugin-module-a:/var/www/html/wp-content/plugins/plugin-module-a:delegated</span>
+      <span class="pi">-</span> <span class="s">./plugins/plugin-module-b:/var/www/html/wp-content/plugins/plugin-module-b:delegated</span>
+      <span class="c1"># ... more addon plugins</span>
+      <span class="pi">-</span> <span class="s">./mu-plugins:/var/www/html/wp-content/mu-plugins:delegated</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="why-this-matters">Why This Matters</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Scenario</th>
+      <th>Plugin Delivery Method</th>
+      <th>Override File Used?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Local dev</strong></td>
+      <td>Bind mounts (instant changes)</td>
+      <td>Yes (auto-merged)</td>
+    </tr>
+    <tr>
+      <td><strong>CI/CD</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">docker cp</code> into containers</td>
+      <td>No (explicitly excluded)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Benefits for local development:</p>
+<ul>
+  <li><strong>Instant file changes</strong>: Edit a plugin file and the change is immediately reflected inside the container.</li>
+  <li><strong>No sync step needed</strong>: No need to rebuild or restart containers after code changes.</li>
+  <li><strong>Lite sites only get Lite plugins</strong>: The override file enforces the same plugin separation that exists in production.</li>
+</ul>
+
+<p>In CI, the <code class="language-plaintext highlighter-rouge">manage.js</code> script detects the CI environment and skips the override file:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+</pre></td><td class="rouge-code"><pre><span class="kd">const</span> <span class="nx">isCI</span> <span class="o">=</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">CI</span> <span class="o">===</span> <span class="dl">'</span><span class="s1">true</span><span class="dl">'</span> <span class="o">||</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">BUILDKITE</span> <span class="o">===</span> <span class="dl">'</span><span class="s1">true</span><span class="dl">'</span><span class="p">;</span>
+
+<span class="k">if </span><span class="p">(</span><span class="nx">isCI</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">baseArgs</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="dl">'</span><span class="s1">-f</span><span class="dl">'</span><span class="p">,</span> <span class="nf">join</span><span class="p">(</span><span class="nx">SCRIPT_DIR</span><span class="p">,</span> <span class="dl">'</span><span class="s1">docker-compose.yml</span><span class="dl">'</span><span class="p">));</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+  <span class="nx">baseArgs</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="dl">'</span><span class="s1">-f</span><span class="dl">'</span><span class="p">,</span> <span class="nf">join</span><span class="p">(</span><span class="nx">SCRIPT_DIR</span><span class="p">,</span> <span class="dl">'</span><span class="s1">docker-compose.yml</span><span class="dl">'</span><span class="p">));</span>
+  <span class="kd">const</span> <span class="nx">overridePath</span> <span class="o">=</span> <span class="nf">join</span><span class="p">(</span><span class="nx">SCRIPT_DIR</span><span class="p">,</span> <span class="dl">'</span><span class="s1">docker-compose.override.yml</span><span class="dl">'</span><span class="p">);</span>
+  <span class="k">if </span><span class="p">(</span><span class="nf">existsSync</span><span class="p">(</span><span class="nx">overridePath</span><span class="p">))</span> <span class="p">{</span>
+    <span class="nx">baseArgs</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="dl">'</span><span class="s1">-f</span><span class="dl">'</span><span class="p">,</span> <span class="nx">overridePath</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<hr />
+
+<h2 id="the-management-script-automating-everything">The Management Script: Automating Everything</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">manage.js</code> file is a Bun-powered CLI that orchestrates the entire lifecycle. Here’s what each command does:</p>
+
+<h3 id="available-commands">Available Commands</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Command</th>
+      <th>npm Script</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">init</code></td>
+      <td><code class="language-plaintext highlighter-rouge">bun run site:init</code></td>
+      <td>Download plugins, start containers, install application, import databases, activate plugins</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">start</code></td>
+      <td><code class="language-plaintext highlighter-rouge">bun run site:start</code></td>
+      <td>Start existing containers (no setup)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">stop</code></td>
+      <td><code class="language-plaintext highlighter-rouge">bun run site:stop</code></td>
+      <td>Stop all running containers</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">reset</code></td>
+      <td><code class="language-plaintext highlighter-rouge">bun run site:reset</code></td>
+      <td>Clean everything and re-initialize</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">cleanup</code></td>
+      <td><code class="language-plaintext highlighter-rouge">bun run site:cleanup</code></td>
+      <td>Remove all containers, volumes, and data</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">logs</code></td>
+      <td><code class="language-plaintext highlighter-rouge">bun run site:logs</code></td>
+      <td>Tail container logs</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">download-plugins</code></td>
+      <td><code class="language-plaintext highlighter-rouge">bun run plugin:download</code></td>
+      <td>Download plugin builds from remote server</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">sync-plugins</code></td>
+      <td><code class="language-plaintext highlighter-rouge">bun run plugin:sync</code></td>
+      <td>Copy plugins to running containers</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">wp</code></td>
+      <td>–</td>
+      <td>Run WP-CLI commands on a specific site</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">export-db</code></td>
+      <td><code class="language-plaintext highlighter-rouge">bun run db:export</code></td>
+      <td>Export a site’s database to a SQL file</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">db ui</code></td>
+      <td><code class="language-plaintext highlighter-rouge">bun run db:phpmyadmin</code></td>
+      <td>Start phpMyAdmin</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="the-init-flow">The Init Flow</h3>
+
+<p>The <code class="language-plaintext highlighter-rouge">init</code> command is the most complex. Here’s what happens step by step:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre></td><td class="rouge-code"><pre>1. Load .env configuration
+2. Check if plugins exist locally
+   ├── Yes → Continue
+   └── No → Download from remote build server (manifest.json)
+3. Determine which sites to start (from SITES_TO_INIT)
+4. Build Docker Compose profile arguments
+5. Start containers with `docker compose up -d`
+6. Wait 20 seconds for services to stabilize
+7. Verify container health
+8. Wait for databases to accept connections (retry loop)
+9. For each site:
+   ├── Copy plugins (CI) or use bind mounts (local)
+   ├── Copy mu-plugins
+   ├── Check if application is already installed
+   │   ├── Yes → Update URLs, activate plugins
+   │   └── No → Install application
+   │       ├── "New" site → Set permalink structure
+   │       └── "Old" site → Import SQL dump, update URLs
+   └── Activate required plugins
+10. Print summary with URLs and credentials
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="plugin-download-system">Plugin Download System</h3>
+
+<p>Plugins are downloaded from a remote build server using a manifest:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre></td><td class="rouge-code"><pre><span class="k">async</span> <span class="kd">function</span> <span class="nf">downloadPluginsFromRemote</span><span class="p">(</span><span class="nx">branch</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">develop</span><span class="dl">'</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">const</span> <span class="nx">baseUrl</span> <span class="o">=</span> <span class="s2">`https://releases.example.com/.../releases/</span><span class="p">${</span><span class="nx">branch</span><span class="p">}</span><span class="s2">`</span><span class="p">;</span>
+
+  <span class="c1">// Fetch manifest listing all plugin ZIP URLs</span>
+  <span class="kd">const</span> <span class="nx">manifest</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">fetch</span><span class="p">(</span><span class="s2">`</span><span class="p">${</span><span class="nx">baseUrl</span><span class="p">}</span><span class="s2">/manifest.json`</span><span class="p">);</span>
+  <span class="kd">const</span> <span class="nx">pluginUrls</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nf">parse</span><span class="p">(</span><span class="nx">manifest</span><span class="p">);</span>
+
+  <span class="c1">// Download and extract each plugin</span>
+  <span class="k">for </span><span class="p">(</span><span class="kd">const</span> <span class="nx">downloadUrl</span> <span class="k">of</span> <span class="nx">pluginUrls</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">await</span> <span class="nx">$</span><span class="s2">`curl -f -L -o </span><span class="p">${</span><span class="nx">tempZipPath</span><span class="p">}</span><span class="s2"> </span><span class="p">${</span><span class="nx">downloadUrl</span><span class="p">}</span><span class="s2">`</span><span class="p">;</span>
+    <span class="k">await</span> <span class="nx">$</span><span class="s2">`unzip -q -o </span><span class="p">${</span><span class="nx">tempZipPath</span><span class="p">}</span><span class="s2"> -d </span><span class="p">${</span><span class="nx">pluginsPath</span><span class="p">}</span><span class="s2">`</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>This means you can test any branch’s plugin build by running:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td><td class="rouge-code"><pre>bun run plugin:download <span class="nt">--</span> feature-branch
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="site-configuration-logic">Site Configuration Logic</h3>
+
+<p>The script knows which plugins belong to which site type:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre></td><td class="rouge-code"><pre><span class="kd">const</span> <span class="nx">SITE_PLUGINS</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="dl">'</span><span class="s1">lite-new</span><span class="dl">'</span><span class="p">:</span> <span class="p">[</span><span class="dl">'</span><span class="s1">my-plugin</span><span class="dl">'</span><span class="p">],</span>
+  <span class="dl">'</span><span class="s1">lite-old</span><span class="dl">'</span><span class="p">:</span> <span class="p">[</span><span class="dl">'</span><span class="s1">my-plugin</span><span class="dl">'</span><span class="p">],</span>
+  <span class="dl">'</span><span class="s1">pro-new</span><span class="dl">'</span><span class="p">:</span> <span class="nx">REQUIRED_PLUGINS</span><span class="p">,</span>  <span class="c1">// All 10 plugins</span>
+  <span class="dl">'</span><span class="s1">pro-old</span><span class="dl">'</span><span class="p">:</span> <span class="nx">REQUIRED_PLUGINS</span><span class="p">,</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>And which sites need database imports:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+</pre></td><td class="rouge-code"><pre><span class="kd">function</span> <span class="nf">getSiteConfigs</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="dl">'</span><span class="s1">lite-new</span><span class="dl">'</span><span class="p">:</span> <span class="p">{</span> <span class="na">port</span><span class="p">:</span> <span class="mi">8083</span><span class="p">,</span> <span class="na">profile</span><span class="p">:</span> <span class="dl">'</span><span class="s1">lite-new</span><span class="dl">'</span><span class="p">,</span> <span class="na">plugin</span><span class="p">:</span> <span class="dl">'</span><span class="s1">my-plugin</span><span class="dl">'</span> <span class="p">},</span>
+    <span class="dl">'</span><span class="s1">lite-old</span><span class="dl">'</span><span class="p">:</span> <span class="p">{</span> <span class="na">port</span><span class="p">:</span> <span class="mi">8082</span><span class="p">,</span> <span class="na">profile</span><span class="p">:</span> <span class="dl">'</span><span class="s1">lite-old</span><span class="dl">'</span><span class="p">,</span> <span class="na">plugin</span><span class="p">:</span> <span class="dl">'</span><span class="s1">my-plugin</span><span class="dl">'</span><span class="p">,</span> <span class="na">importDb</span><span class="p">:</span> <span class="kc">true</span> <span class="p">},</span>
+    <span class="dl">'</span><span class="s1">pro-new</span><span class="dl">'</span><span class="p">:</span>  <span class="p">{</span> <span class="na">port</span><span class="p">:</span> <span class="mi">8081</span><span class="p">,</span> <span class="na">profile</span><span class="p">:</span> <span class="dl">'</span><span class="s1">pro-new</span><span class="dl">'</span><span class="p">,</span>  <span class="na">plugin</span><span class="p">:</span> <span class="dl">'</span><span class="s1">my-plugin-pro</span><span class="dl">'</span> <span class="p">},</span>
+    <span class="dl">'</span><span class="s1">pro-old</span><span class="dl">'</span><span class="p">:</span>  <span class="p">{</span> <span class="na">port</span><span class="p">:</span> <span class="mi">8080</span><span class="p">,</span> <span class="na">profile</span><span class="p">:</span> <span class="dl">'</span><span class="s1">pro-old</span><span class="dl">'</span><span class="p">,</span>  <span class="na">plugin</span><span class="p">:</span> <span class="dl">'</span><span class="s1">my-plugin-pro</span><span class="dl">'</span><span class="p">,</span> <span class="na">importDb</span><span class="p">:</span> <span class="kc">true</span> <span class="p">},</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>Sites with <code class="language-plaintext highlighter-rouge">importDb: true</code> (the “old” sites) will have a pre-existing database imported after application installation, simulating a site that has been running with the plugin for a while.</p>
+
+<hr />
+
+<h2 id="mu-plugins-custom-rest-api-helpers-for-testing">MU-Plugins: Custom REST API Helpers for Testing</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">test-automation-helpers.php</code> mu-plugin exposes application internals via REST API endpoints that Playwright tests can query. This is a critical piece – it lets your tests <strong>read application state without going through the UI</strong>.</p>
+
+<h3 id="exposed-endpoints">Exposed Endpoints</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Endpoint</th>
+      <th>What It Returns</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GET /wp-json/</code> (modified)</td>
+      <td>application version in the <code class="language-plaintext highlighter-rouge">generator</code> field</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GET /wp-json/wp/v2/posts</code> (modified)</td>
+      <td>Includes <code class="language-plaintext highlighter-rouge">comment_count</code> field on each post</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GET /wp-json/e2e/v1/permalink-structure</code></td>
+      <td>Current permalink structure setting</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GET /wp-json/e2e/v1/timezone</code></td>
+      <td>application timezone setting</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GET /wp-json/e2e/v1/date-format</code></td>
+      <td>Date format string</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GET /wp-json/e2e/v1/time-format</code></td>
+      <td>Time format string</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GET /wp-json/e2e/v1/plugins</code></td>
+      <td>All installed plugins with status and version</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GET /wp-json/e2e/v1/post-types</code></td>
+      <td>All public post types</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GET /wp-json/e2e/v1/taxonomies</code></td>
+      <td>All public taxonomies</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GET /wp-json/e2e/v1/reading-settings</code></td>
+      <td>All reading settings (homepage display, posts per page, etc.)</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">GET /wp-json/e2e/v1/homepage-last-modified</code></td>
+      <td>ISO 8601 date of most recent content modification</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="example-plugin-status-endpoint">Example: Plugin Status Endpoint</h3>
+
+<div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+</pre></td><td class="rouge-code"><pre><span class="nf">register_rest_route</span><span class="p">(</span><span class="s1">'e2e/v1'</span><span class="p">,</span> <span class="s1">'/plugins'</span><span class="p">,</span> <span class="p">[</span>
+    <span class="s1">'methods'</span>  <span class="o">=&gt;</span> <span class="s1">'GET'</span><span class="p">,</span>
+    <span class="s1">'callback'</span> <span class="o">=&gt;</span> <span class="k">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$plugins</span> <span class="o">=</span> <span class="nf">get_plugins</span><span class="p">();</span>
+        <span class="nv">$plugin_map</span> <span class="o">=</span> <span class="p">[];</span>
+
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$plugins</span> <span class="k">as</span> <span class="nv">$file</span> <span class="o">=&gt;</span> <span class="nv">$data</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$slug</span> <span class="o">=</span> <span class="nf">sanitize_title</span><span class="p">(</span><span class="nv">$data</span><span class="p">[</span><span class="s1">'Name'</span><span class="p">]);</span>
+            <span class="nv">$plugin_map</span><span class="p">[</span><span class="nv">$slug</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s1">'file'</span>    <span class="o">=&gt;</span> <span class="nv">$file</span><span class="p">,</span>
+                <span class="s1">'status'</span>  <span class="o">=&gt;</span> <span class="nf">is_plugin_active</span><span class="p">(</span><span class="nv">$file</span><span class="p">)</span> <span class="o">?</span> <span class="s1">'active'</span> <span class="o">:</span> <span class="s1">'inactive'</span><span class="p">,</span>
+                <span class="s1">'version'</span> <span class="o">=&gt;</span> <span class="nv">$data</span><span class="p">[</span><span class="s1">'Version'</span><span class="p">]</span> <span class="o">??</span> <span class="s1">'unknown'</span><span class="p">,</span>
+            <span class="p">];</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nv">$plugin_map</span><span class="p">;</span>
+    <span class="p">},</span>
+    <span class="s1">'permission_callback'</span> <span class="o">=&gt;</span> <span class="s1">'__return_true'</span><span class="p">,</span>
+<span class="p">]);</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>In a Playwright test, you can now verify plugin state programmatically:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+</pre></td><td class="rouge-code"><pre><span class="kd">const</span> <span class="nx">response</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">request</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="dl">'</span><span class="s1">http://localhost:8080/wp-json/e2e/v1/plugins</span><span class="dl">'</span><span class="p">);</span>
+<span class="kd">const</span> <span class="nx">plugins</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">response</span><span class="p">.</span><span class="nf">json</span><span class="p">();</span>
+<span class="nf">expect</span><span class="p">(</span><span class="nx">plugins</span><span class="p">[</span><span class="dl">'</span><span class="s1">my-plugin-pro</span><span class="dl">'</span><span class="p">].</span><span class="nx">status</span><span class="p">).</span><span class="nf">toBe</span><span class="p">(</span><span class="dl">'</span><span class="s1">active</span><span class="dl">'</span><span class="p">);</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>This is a mu-plugin (must-use plugin), meaning application loads it automatically without activation. It gets mounted into every container via the override file or copied via <code class="language-plaintext highlighter-rouge">docker cp</code> in CI.</p>
+
+<hr />
+
+<h2 id="environment-configuration">Environment Configuration</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">.env</code> file drives the entire setup:</p>
+
+<pre><code class="language-env"># application version
+WP_VERSION=latest
+
+# Default credentials
+USERNAME=admin
+PASSWORD=1234
+
+# Which sites to initialize (comma-separated)
+SITES_TO_INIT=pro-old,lite-new
+
+# Site URLs (ports are extracted automatically)
+PRO_OLD_BASE_URL=http://localhost:8080
+PRO_NEW_BASE_URL=http://localhost:8081
+LITE_OLD_BASE_URL=http://localhost:8082
+LITE_NEW_BASE_URL=http://localhost:8083
+</code></pre>
+
+<h3 id="how-ports-are-derived">How Ports Are Derived</h3>
+
+<p>Instead of duplicating port configuration, the <code class="language-plaintext highlighter-rouge">manage.js</code> script extracts ports from the URLs automatically:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+</pre></td><td class="rouge-code"><pre><span class="kd">function</span> <span class="nf">extractPortFromUrl</span><span class="p">(</span><span class="nx">url</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">const</span> <span class="nx">match</span> <span class="o">=</span> <span class="nx">url</span><span class="p">.</span><span class="nf">match</span><span class="p">(</span><span class="sr">/:</span><span class="se">(\d</span><span class="sr">+</span><span class="se">)</span><span class="sr">/</span><span class="p">);</span>
+  <span class="k">return</span> <span class="nx">match</span> <span class="p">?</span> <span class="nf">parseInt</span><span class="p">(</span><span class="nx">match</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">10</span><span class="p">)</span> <span class="p">:</span> <span class="mi">80</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nf">exportPortsFromBaseUrls</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">if </span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">PRO_OLD_BASE_URL</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">PRO_OLD_PORT</span> <span class="o">=</span> <span class="nf">extractPortFromUrl</span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">PRO_OLD_BASE_URL</span><span class="p">).</span><span class="nf">toString</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="c1">// ... same for other sites</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>Docker Compose then uses these as variables:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+</pre></td><td class="rouge-code"><pre><span class="na">ports</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="s2">"</span><span class="s">${PRO_OLD_PORT:-8080}:80"</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>One source of truth. Change the URL, and the port follows.</p>
+
+<hr />
+
+<h2 id="integrating-with-playwright-for-e2e-tests">Integrating with Playwright for E2E Tests</h2>
+
+<p>The Playwright configuration reads the same <code class="language-plaintext highlighter-rouge">.env</code> file and targets the Docker-hosted application sites:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+</pre></td><td class="rouge-code"><pre><span class="c1">// playwright.config.js</span>
+<span class="k">import</span> <span class="nx">dotenv</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">dotenv</span><span class="dl">'</span><span class="p">;</span>
+<span class="nx">dotenv</span><span class="p">.</span><span class="nf">config</span><span class="p">();</span>
+
+<span class="k">export</span> <span class="k">default</span> <span class="nf">defineConfig</span><span class="p">({</span>
+  <span class="na">testDir</span><span class="p">:</span> <span class="dl">'</span><span class="s1">./tests/e2e/</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">timeout</span><span class="p">:</span> <span class="mi">80000</span><span class="p">,</span>
+  <span class="na">use</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">headless</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="na">trace</span><span class="p">:</span> <span class="dl">'</span><span class="s1">retain-on-failure</span><span class="dl">'</span><span class="p">,</span>
+    <span class="na">actionTimeout</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span>
+    <span class="na">launchOptions</span><span class="p">:</span> <span class="p">{</span>
+      <span class="na">slowMo</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="na">projects</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="na">name</span><span class="p">:</span> <span class="dl">'</span><span class="s1">license-activation</span><span class="dl">'</span><span class="p">,</span>
+      <span class="na">testMatch</span><span class="p">:</span> <span class="dl">'</span><span class="s1">**/general-settings.spec.js</span><span class="dl">'</span><span class="p">,</span>
+      <span class="na">grep</span><span class="p">:</span> <span class="sr">/Activate license key/</span><span class="p">,</span>
+      <span class="na">use</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span><span class="nx">devices</span><span class="p">[</span><span class="dl">'</span><span class="s1">Desktop Chrome</span><span class="dl">'</span><span class="p">],</span> <span class="na">viewport</span><span class="p">:</span> <span class="p">{</span> <span class="na">width</span><span class="p">:</span> <span class="mi">1440</span><span class="p">,</span> <span class="na">height</span><span class="p">:</span> <span class="mi">798</span> <span class="p">}</span> <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="na">name</span><span class="p">:</span> <span class="dl">'</span><span class="s1">visual-regression</span><span class="dl">'</span><span class="p">,</span>
+      <span class="na">testMatch</span><span class="p">:</span> <span class="dl">'</span><span class="s1">**/visual-regression.spec.js</span><span class="dl">'</span><span class="p">,</span>
+      <span class="na">use</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span><span class="nx">devices</span><span class="p">[</span><span class="dl">'</span><span class="s1">Desktop Chrome</span><span class="dl">'</span><span class="p">],</span> <span class="na">viewport</span><span class="p">:</span> <span class="p">{</span> <span class="na">width</span><span class="p">:</span> <span class="mi">1920</span><span class="p">,</span> <span class="na">height</span><span class="p">:</span> <span class="mi">940</span> <span class="p">}</span> <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="c1">// ... more test projects</span>
+  <span class="p">],</span>
+<span class="p">});</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="running-tests">Running Tests</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+</pre></td><td class="rouge-code"><pre><span class="c"># Setup Playwright browsers (first time only)</span>
+bun run <span class="nb">test</span>:setup
+
+<span class="c"># Run all tests</span>
+bun run <span class="nb">test</span>
+
+<span class="c"># Run specific test file</span>
+bun run <span class="nb">test</span>:file tests/e2e/sitemap.spec.js
+
+<span class="c"># Run tests by tag</span>
+bun run <span class="nb">test</span>:tag @smoke
+
+<span class="c"># Run with visible browser (debug mode)</span>
+bun run <span class="nb">test</span>:debug
+
+<span class="c"># View the HTML report</span>
+bun run <span class="nb">test</span>:report
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<hr />
+
+<h2 id="running-the-setup-step-by-step">Running the Setup Step by Step</h2>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ol>
+  <li><strong>Docker Desktop</strong> installed and running.</li>
+  <li><strong>Bun</strong> runtime installed (<code class="language-plaintext highlighter-rouge">curl -fsSL https://bun.sh/install | bash</code>).</li>
+  <li><strong>Node.js</strong> (for Playwright).</li>
+</ol>
+
+<h3 id="first-time-setup">First-Time Setup</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre></td><td class="rouge-code"><pre><span class="c"># 1. Clone the repository and navigate to the test directory</span>
+<span class="nb">cd </span>_e2e-tests
+
+<span class="c"># 2. Install dependencies</span>
+bun <span class="nb">install</span>
+
+<span class="c"># 3. Create your .env file</span>
+<span class="nb">cp</span> .env.example .env
+<span class="c"># Edit .env with your configuration</span>
+
+<span class="c"># 4. Initialize the Docker environment</span>
+<span class="c"># This downloads plugins, starts containers, installs application,</span>
+<span class="c"># imports databases, and activates plugins</span>
+bun run site:init
+
+<span class="c"># 5. Install Playwright browsers</span>
+bun run <span class="nb">test</span>:setup
+
+<span class="c"># 6. Run your tests</span>
+bun run <span class="nb">test</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="daily-workflow">Daily Workflow</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+</pre></td><td class="rouge-code"><pre><span class="c"># Start your sites (if stopped)</span>
+bun run site:start
+
+<span class="c"># Run tests</span>
+bun run <span class="nb">test</span>
+
+<span class="c"># Check container status</span>
+bun run site:status
+
+<span class="c"># Stop when done</span>
+bun run site:stop
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="when-things-go-wrong">When Things Go Wrong</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+</pre></td><td class="rouge-code"><pre><span class="c"># Full reset (wipes everything and re-initializes)</span>
+bun run site:reset
+
+<span class="c"># Just clean up (remove all containers and volumes)</span>
+bun run site:cleanup
+
+<span class="c"># Check container logs</span>
+bun run site:logs
+
+<span class="c"># Open phpMyAdmin to inspect databases</span>
+bun run db:phpmyadmin
+<span class="c"># Visit http://localhost:8084 (root / somewordpress)</span>
+
+<span class="c"># Run WP-CLI commands directly</span>
+docker/manage.js wp pro-old plugin list
+docker/manage.js wp lite-new option get siteurl
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<hr />
+
+<h2 id="cicd-integration-with-buildkite">CI/CD Integration with Buildkite</h2>
+
+<p>The setup works seamlessly in CI. The key differences:</p>
+
+<ol>
+  <li><strong>No override file</strong> – plugins are copied via <code class="language-plaintext highlighter-rouge">docker cp</code> instead of bind mounts.</li>
+  <li><strong>TTY disabled</strong> – the <code class="language-plaintext highlighter-rouge">-T</code> flag is added to <code class="language-plaintext highlighter-rouge">docker compose run</code> to prevent hanging.</li>
+  <li><strong>Plugin download is mandatory</strong> – fails hard if plugins can’t be downloaded.</li>
+  <li><strong>Test results</strong> are reported to Buildkite’s test analytics.</li>
+</ol>
+
+<p>The management script auto-detects CI:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td><td class="rouge-code"><pre><span class="kd">const</span> <span class="nx">isCI</span> <span class="o">=</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">CI</span> <span class="o">===</span> <span class="dl">'</span><span class="s1">true</span><span class="dl">'</span> <span class="o">||</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">BUILDKITE</span> <span class="o">===</span> <span class="dl">'</span><span class="s1">true</span><span class="dl">'</span><span class="p">;</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>This single check controls:</p>
+<ul>
+  <li>Whether the override file is used.</li>
+  <li>Whether <code class="language-plaintext highlighter-rouge">-T</code> is passed to WP-CLI commands.</li>
+  <li>Whether plugin download failures are fatal.</li>
+  <li>Whether test results are streamed to Buildkite.</li>
+</ul>
+
+<hr />
+
+<h2 id="troubleshooting-common-issues">Troubleshooting Common Issues</h2>
+
+<h3 id="permission-issues-with-bind-mounts">Permission Issues with Bind Mounts</h3>
+
+<p>Docker may create root-owned files on your host. Fix with:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td><td class="rouge-code"><pre>bun run site:cleanup
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="port-conflicts">Port Conflicts</h3>
+
+<p>If another service uses port 8080-8084, change the URLs in <code class="language-plaintext highlighter-rouge">.env</code>:</p>
+
+<pre><code class="language-env">PRO_OLD_BASE_URL=http://localhost:9080
+</code></pre>
+
+<p>The port is auto-extracted and passed to Docker Compose.</p>
+
+<h3 id="database-not-ready">Database Not Ready</h3>
+
+<p>The init script retries database connections up to 30 times with a 2-second delay. If it still fails, check:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td><td class="rouge-code"><pre>bun run site:logs
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<h3 id="stale-containers">Stale Containers</h3>
+
+<p>If you see weird behavior after pulling new code:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td><td class="rouge-code"><pre>bun run site:reset
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<p>This does a full cleanup and re-initialization.</p>
+
+<h3 id="plugin-download-failures">Plugin Download Failures</h3>
+
+<p>If the remote build server is unreachable:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+</pre></td><td class="rouge-code"><pre><span class="c"># Try a specific branch</span>
+bun run plugin:download <span class="nt">--</span> develop
+
+<span class="c"># Or manually place plugin ZIPs in docker/plugins/</span>
+</pre></td></tr></tbody></table></code></pre></div></div>
+
+<hr />
+
+<h2 id="key-takeaways">Key Takeaways</h2>
+
+<ol>
+  <li><strong>Docker Compose profiles</strong> let you run only the sites you need, saving resources.</li>
+  <li><strong>Override files</strong> cleanly separate local development (bind mounts) from CI (docker cp).</li>
+  <li><strong>A management script</strong> (in Bun/Node) abstracts Docker commands into simple workflows.</li>
+  <li><strong>MU-plugins</strong> expose application internals via REST APIs, making programmatic assertions easy.</li>
+  <li><strong>Environment-driven configuration</strong> means one <code class="language-plaintext highlighter-rouge">.env</code> file controls everything.</li>
+  <li><strong>“Old” sites with imported databases</strong> let you test upgrade paths alongside fresh installs.</li>
+</ol>
+
+<p>This setup has cut our manual testing time significantly and given us confidence that both Lite and Pro versions work correctly across fresh installs and upgrades. The same environment runs locally and in CI, eliminating “works on my machine” issues entirely.</p>
+
+<p>If you’re building a plugin with multiple versions or configurations, I hope this gives you a solid foundation to build your own automated testing pipeline.</p>
+
+            </div>
+
+            <!-- Rating -->
+            
+
+            <!-- Post Date -->
+            <p>
+            <small>
+                <span class="post-date"><time class="post-date" datetime="2026-03-26">26 Mar 2026</time></span>           
+                
+                </small>
+            </p>
+
+            <!-- Post Categories -->
+            <div class="after-post-cats">
+                <ul class="tags mb-4">
+                    
+                    
+                    <li>
+                        <a class="smoothscroll" href="/categories#Automation">Automation</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/categories#DevOps">DevOps</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/categories#Docker">Docker</a>
+                    </li>
+                    
+                </ul>
+            </div>
+            <!-- End Categories -->
+
+            <!-- Post Tags -->
+            <div class="after-post-tags">
+                <ul class="tags">
+                    
+                    
+                    <li>
+                        <a class="smoothscroll" href="/tags#ci-cd">#ci-cd</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/tags#docker">#docker</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/tags#docker-compose">#docker-compose</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/tags#playwright">#playwright</a>
+                    </li>
+                    
+                    <li>
+                        <a class="smoothscroll" href="/tags#testing">#testing</a>
+                    </li>
+                    
+                </ul>
+            </div>
+            <!-- End Tags -->
+
+            <!-- Buy me a coffee -->
+            <div class="post-support" style="margin-top:2rem;padding:1.5rem 0;border-top:1px solid rgba(0,0,0,0.1);font-size:0.95rem;color:#555;">
+                If you found this post helpful, consider <a href="https://buymeacoffee.com/islammdshariful" target="_blank" style="color:#A69990;font-weight:600;">buying me a coffee</a>. It keeps me writing!
+            </div>
+
+            <!-- Prev/Next -->
+            <div class="row PageNavigation d-flex justify-content-between font-weight-bold">
+            
+            
+            <a class="next d-block col-md-6 text-lg-right" href="/blog-ai-qa-agent-claude-code/">How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code &raquo; </a>
+            
+            <div class="clearfix"></div>
+            </div>
+            <!-- End Categories -->
+
+        </div>
+        <!-- End Post -->
+
+    </div>
+</div>
+<!-- End Article
+================================================== -->
+
+
+<!-- Review with LD-JSON, adapt it for your needs if you like, but make sure you test the generated HTML source code first: 
+https://search.google.com/structured-data/testing-tool/u/0/
+================================================== -->
+
+</div>
+
+
+    
+</div>
+
+</div> <!-- /.site-content -->
+
+<!-- Begin Footer
+================================================== -->
+<footer class="footer">
+    <div class="container text-center">
+        <div class="footer-links mb-2">
+            <a href="/">Home</a>
+            <span class="footer-sep">·</span>
+            <a href="/categories">Categories</a>
+            <span class="footer-sep">·</span>
+            <a href="/about-me">About Me</a>
+            <span class="footer-sep">·</span>
+            <a href="https://github.com/islammdshariful" target="_blank">GitHub</a>
+            <span class="footer-sep">·</span>
+            <a href="https://www.linkedin.com/in/islamdshariful/" target="_blank">LinkedIn</a>
+        </div>
+        <p class="footer-copy">© 2026 islammdshariful.</p>
+    </div>
+</footer>
+<!-- End Footer
+================================================== -->
+
+<!-- Scripts
+================================================== -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+
+<script src="/assets/js/mediumish.js"></script>
+
+
+
+<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
+
+<script src="/assets/js/dotgrid.js"></script>
+
+<script src="/assets/js/darkmode.js"></script>
+
+</body>
+</html>
