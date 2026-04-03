@@ -1,1578 +1,816 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
-<link rel="icon" href="/assets/images/favicon.ico">
-
-<title>How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code | islammdshariful</title>
-
-<!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code | islammdshariful</title>
-<meta name="generator" content="Jekyll v4.4.1" />
-<meta property="og:title" content="How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code" />
-<meta name="author" content="shariful" />
-<meta property="og:locale" content="en_US" />
-<meta name="description" content="Step-by-step guide to building an AI-powered QA agent that reads PR diffs and generates comprehensive white-box test plans using Claude Code and Playwright." />
-<meta property="og:description" content="Step-by-step guide to building an AI-powered QA agent that reads PR diffs and generates comprehensive white-box test plans using Claude Code and Playwright." />
-<link rel="canonical" href="https://islammdshariful.github.io/blog-ai-qa-agent-claude-code/" />
-<meta property="og:url" content="https://islammdshariful.github.io/blog-ai-qa-agent-claude-code/" />
-<meta property="og:site_name" content="islammdshariful" />
-<meta property="og:type" content="article" />
-<meta property="article:published_time" content="2026-04-02T00:00:00+00:00" />
-<meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content="How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code" />
-<meta name="google-site-verification" content="kI5ETCzLkbONpDOiDEiMP6j_vddLz72R34Rz0Y67iQo" />
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"shariful"},"dateModified":"2026-04-02T00:00:00+00:00","datePublished":"2026-04-02T00:00:00+00:00","description":"Step-by-step guide to building an AI-powered QA agent that reads PR diffs and generates comprehensive white-box test plans using Claude Code and Playwright.","headline":"How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code","mainEntityOfPage":{"@type":"WebPage","@id":"https://islammdshariful.github.io/blog-ai-qa-agent-claude-code/"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://islammdshariful.github.io/assets/images/logo.png"},"name":"shariful"},"url":"https://islammdshariful.github.io/blog-ai-qa-agent-claude-code/"}</script>
-<!-- End Jekyll SEO tag -->
-
-
-
-<meta name="google-site-verification" content="kI5ETCzLkbONpDOiDEiMP6j_vddLz72R34Rz0Y67iQo" />
-
-
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    
-<link href="/assets/css/screen.css" rel="stylesheet">
-
-<link href="/assets/css/main.css" rel="stylesheet">
-
-<script src="/assets/js/jquery.min.js"></script>
-
-</head>
-
-
-<!-- Google Analytics 4 (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-5M0KQ60CEW"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-5M0KQ60CEW');
-</script>
-
-
-
-<body class="layout-post">
-	<!-- defer loading of font and font awesome -->
-	<noscript id="deferred-styles">
-		<link href="https://fonts.googleapis.com/css?family=Righteous%7CMerriweather:300,300i,400,400i,700,700i" rel="stylesheet">
-		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
-	</noscript>
-
-
-<!-- Begin Menu Navigation
-================================================== -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top mediumnavigation nav-down">
-
-    <div class="container pr-0">
-
-    <!-- Search icon (left) -->
-    <div class="nav-left-actions">
-        <div class="nav-search-wrap">
-            <div class="nav-search">
-                <span class="nav-search-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                </span>
-                <script src="/assets/js/lunr.js"></script>
-
-
-<style>
-    #lunrsearchresults {
-        position: fixed;
-        top: 60px;
-        left: 15px;
-        width: 400px;
-        min-height: 100px;
-        max-height: 70vh;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        z-index: 9999;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        padding: 12px 16px;
-        opacity: 0;
-        transform: translateY(-10px) scale(0.97);
-        pointer-events: none;
-        transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    #lunrsearchresults.visible {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        pointer-events: auto;
-    }
-    /* Custom scrollbar */
-    #lunrsearchresults::-webkit-scrollbar {
-        width: 6px;
-    }
-    #lunrsearchresults::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    #lunrsearchresults::-webkit-scrollbar-thumb {
-        background: rgba(0, 0, 0, 0.15);
-        border-radius: 3px;
-    }
-    #lunrsearchresults::-webkit-scrollbar-thumb:hover {
-        background: rgba(0, 0, 0, 0.3);
-    }
-    #lunrsearchresults ul { list-style: none; padding: 0; margin: 0; }
-    @media (max-width: 991px) {
-        #lunrsearchresults {
-            position: fixed;
-            top: 60px;
-            left: 15px;
-            right: 15px;
-            width: auto;
-        }
-    }
-    .lunrsearchresult .title {color: #A69990;}
-    .lunrsearchresult .url {color: silver; font-size: 0.8rem;}
-    .lunrsearchresult a {display: block; color: #777; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05);}
-    .lunrsearchresult a:hover, .lunrsearchresult a:focus {text-decoration: none;}
-    .lunrsearchresult a:hover .title {text-decoration: underline;}
-</style>
-
-
-<form class="bd-search" onSubmit="return lunr_search(document.getElementById('lunrsearch').value);">
-    <input type="text" class="form-control text-small launch-modal-search" id="lunrsearch" name="q" maxlength="255" value="" placeholder="Type and enter..."/>
-</form>
-
-<div id="lunrsearchresults">
-    <ul></ul>
-</div>
-
-<script src="/assets/js/lunrsearchengine.js"></script>
-<script>
-(function() {
-  var icon = document.querySelector('.nav-search-icon');
-  var search = document.querySelector('.nav-search');
-  var input = document.getElementById('lunrsearch');
-
-  icon.addEventListener('click', function(e) {
-    e.stopPropagation();
-    search.classList.toggle('active');
-    if (search.classList.contains('active')) {
-      input.focus();
-    }
-  });
-
-  document.addEventListener('click', function(e) {
-    if (!e.target.closest('.nav-search')) {
-      search.classList.remove('active');
-    }
-  });
-})();
-</script>
-            </div>
-        </div>
-    </div>
-
-    <div class="navbar-nav-always" id="navbarMediumish">
-
-        <!-- Begin Menu (centered) -->
-        <ul class="navbar-nav mx-auto">
-
-            
-            <li class="nav-item">
-            
-            <a class="nav-link" href="/">Home</a>
-            </li>
-
-            <li class="nav-item">
-            <a class="nav-link" href="/categories">Categories</a>
-            </li>
-
-            <li class="nav-item">
-            <a class="nav-link" href="/about-me">About Me</a>
-            </li>
-
-        </ul>
-        <!-- End Menu -->
-
-    </div>
-
-    <!-- Dark mode toggle (right) -->
-    <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
-        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-
-    </div>
-
-    </div>
-</nav>
-<!-- End Navigation
-================================================== -->
-
-<div class="site-content">
-
-<div class="container">
-
-
-
-<!-- Content
-================================================== -->
-<div class="main-content">
-    <!-- Begin Article
-================================================== -->
-<div class="container">
-    <div class="row">
-
-        <!-- Post -->
-        
-
-        <div class="col-md-10 mx-auto">
-            <div class="mainheading">
-
-                <!-- Author Box -->
-                
-                <div class="row post-top-meta">
-                    <div class="col-xs-12 col-md-3 col-lg-2 text-center text-md-left mb-4 mb-md-0">
-                        
-                        <img class="author-thumb" src="/assets/images/avatar.jpg" alt="islammdshariful">
-                        
-                    </div>
-                    <div class="col-xs-12 col-md-9 col-lg-10 text-center text-md-left">
-                        <a target="_blank" class="link-dark" href="">islammdshariful</a>
-                        <br/><span class="author-description">QA Engineer. I write about Playwright, automation, and AI-driven QA workflows.</span>
-                    </div>
-                </div>
-                
-
-                <!-- Post Title -->
-                <h1 class="posttitle">How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code</h1>
-
-            </div>
-
-            <!-- Adsense if enabled from _config.yml (change your pub id and slot) -->
-            
-            <!-- End Adsense -->
-
-            <!-- Post Featured Image -->
-            
-            <!-- End Featured Image -->
-
-            <!-- Post Content -->
-            <div class="article-post">
-                <!-- Toc if any -->
-                
-                <!-- End Toc -->
-                <p>Manual QA is one of the biggest bottlenecks in software development. Every pull request needs test cases, every feature needs regression coverage, and every bug fix needs verification steps. I built an automated system that reads your PR diff, understands what changed at the code level, and generates a comprehensive, white-box test plan — all triggered by a single slash command inside Claude Code.</p>
-
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link rel="icon" href="/assets/images/favicon.ico"><title>How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code | islammdshariful</title><meta name="description" content="Step-by-step guide to building an AI-powered QA agent that reads PR diffs and generates comprehensive white-box test plans using Claude Code and Playwright."><meta name="google-site-verification" content="kI5ETCzLkbONpDOiDEiMP6j_vddLz72R34Rz0Y67iQo"><!-- Open Graph --><meta property="og:title" content="How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code | islammdshariful"><meta property="og:description" content="Step-by-step guide to building an AI-powered QA agent that reads PR diffs and generates comprehensive white-box test plans using Claude Code and Playwright."><meta property="og:image" content="/assets/images/favicon.ico"><meta property="og:type" content="article"><meta property="og:url" content="https://islammdshariful.github.io/blog-ai-qa-agent-claude-code/"><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code | islammdshariful"><meta name="twitter:description" content="Step-by-step guide to building an AI-powered QA agent that reads PR diffs and generates comprehensive white-box test plans using Claude Code and Playwright."><meta name="twitter:image" content="/assets/images/favicon.ico"><!-- Bootstrap 4.1.3 CSS --><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"><!-- RSS --><link rel="alternate" type="application/rss+xml" title="islammdshariful" href="/rss.xml"><!-- Google Fonts --><link href="https://fonts.googleapis.com/css?family=Righteous%7CMerriweather:300,300i,400,400i,700,700i" rel="stylesheet"><!-- FontAwesome 5 --><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjm1D7N/aWc6ggvdrGQ2g/SCnF1yTRhViEZJf+M4Cuuf+A" crossorigin="anonymous"><!-- GA4 --><script async src="https://www.googletagmanager.com/gtag/js?id=G-5M0KQ60CEW"></script><script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-5M0KQ60CEW');
+    </script><link rel="stylesheet" href="/_astro/_slug_.KuRqzWPq.css"></head> <body class="layout-post"> <!-- Navbar --> <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top mediumnavigation nav-down"> <div class="container pr-0"> <!-- Search icon (left) --> <div class="nav-left-actions"> <div class="nav-search-wrap"> <div class="nav-search"> <span class="nav-search-icon"> <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> </span> <!-- Search placeholder - will be replaced in Task 11 --> <form class="bd-search" id="pagefind-form"> <input type="text" class="form-control text-small launch-modal-search" id="pagefind-input" maxlength="255" value="" placeholder="Type and enter..."> </form> <div id="pagefind-results"><ul></ul></div> </div> </div> </div> <div class="navbar-nav-always" id="navbarMediumish"> <ul class="navbar-nav mx-auto"> <li class="nav-item"> <a class="nav-link" href="/">Home</a> </li> <li class="nav-item"> <a class="nav-link" href="/blog">Blogs</a> </li> <li class="nav-item"> <a class="nav-link" href="/about-me">About Me</a> </li> </ul> </div> <!-- Dark mode toggle --> <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode"> <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg> <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg> </button> </div> </nav> <!-- Site Content --> <div class="site-content"> <div class="container">  <div class="main-content">  <div class="container"> <div class="row"> <div class="col-md-10 mx-auto"> <div class="mainheading"> <!-- Author Box --> <div class="row post-top-meta"> <div class="col-xs-12 col-md-3 col-lg-2 text-center text-md-left mb-4 mb-md-0"> <img class="author-thumb" src="/assets/images/avatar.jpg" alt="islammdshariful"> </div> <div class="col-xs-12 col-md-9 col-lg-10 text-center text-md-left"> <a class="link-dark">islammdshariful</a> <br><span class="author-description">QA Engineer. I write about Playwright, automation, and AI-driven QA workflows.</span> </div> </div> <h1 class="posttitle">How I Built an AI-Powered QA Agent That Generates Test Plans From Pull Requests Using Claude Code</h1> </div>  <div class="article-post">  <p>Manual QA is one of the biggest bottlenecks in software development. Every pull request needs test cases, every feature needs regression coverage, and every bug fix needs verification steps. I built an automated system that reads your PR diff, understands what changed at the code level, and generates a comprehensive, white-box test plan — all triggered by a single slash command inside Claude Code.</p>
 <p>In this guide, I’ll walk you through the exact architecture, every file involved, and how you can replicate this for your own project.</p>
-
-<hr />
-
+<hr>
 <h2 id="table-of-contents">Table of Contents</h2>
-
 <ol>
-  <li><a href="#the-problem-manual-qa-doesnt-scale">The Problem: Manual QA Doesn’t Scale</a></li>
-  <li><a href="#architecture-overview">Architecture Overview</a></li>
-  <li><a href="#component-1-the-pr-analysis-shell-script">Component 1: The PR Analysis Shell Script</a></li>
-  <li><a href="#component-2-the-slash-command-orchestrator">Component 2: The Slash Command (Orchestrator)</a></li>
-  <li><a href="#component-3-the-qa-agent-test-plan-generator">Component 3: The QA Agent (Test Plan Generator)</a></li>
-  <li><a href="#component-4-the-qa-reference-playbook">Component 4: The QA Reference Playbook</a></li>
-  <li><a href="#how-it-all-works-together">How It All Works Together</a></li>
-  <li><a href="#the-output-what-you-get">The Output: What You Get</a></li>
-  <li><a href="#step-by-step-implementation-guide">Step-by-Step Implementation Guide</a></li>
-  <li><a href="#key-design-decisions-and-why">Key Design Decisions and Why</a></li>
-  <li><a href="#customizing-for-your-project">Customizing for Your Project</a></li>
-  <li><a href="#conclusion">Conclusion</a></li>
+<li><a href="#the-problem-manual-qa-doesnt-scale">The Problem: Manual QA Doesn’t Scale</a></li>
+<li><a href="#architecture-overview">Architecture Overview</a></li>
+<li><a href="#component-1-the-pr-analysis-shell-script">Component 1: The PR Analysis Shell Script</a></li>
+<li><a href="#component-2-the-slash-command-orchestrator">Component 2: The Slash Command (Orchestrator)</a></li>
+<li><a href="#component-3-the-qa-agent-test-plan-generator">Component 3: The QA Agent (Test Plan Generator)</a></li>
+<li><a href="#component-4-the-qa-reference-playbook">Component 4: The QA Reference Playbook</a></li>
+<li><a href="#how-it-all-works-together">How It All Works Together</a></li>
+<li><a href="#the-output-what-you-get">The Output: What You Get</a></li>
+<li><a href="#step-by-step-implementation-guide">Step-by-Step Implementation Guide</a></li>
+<li><a href="#key-design-decisions-and-why">Key Design Decisions and Why</a></li>
+<li><a href="#customizing-for-your-project">Customizing for Your Project</a></li>
+<li><a href="#conclusion">Conclusion</a></li>
 </ol>
-
-<hr />
-
+<hr>
 <h2 id="the-problem-manual-qa-doesnt-scale">The Problem: Manual QA Doesn’t Scale</h2>
-
 <p>If you’re working on a project with frequent PRs, you’ve probably experienced this:</p>
-
 <ul>
-  <li>Developers write PRs with vague test instructions like “test that it works”</li>
-  <li>QA engineers spend hours reading diffs to understand what actually changed</li>
-  <li>Edge cases get missed because nobody traced every <code class="language-plaintext highlighter-rouge">if/else</code> branch in the code</li>
-  <li>Security vulnerabilities (missing nonce checks, unsanitized input) slip through</li>
-  <li>Regression areas are overlooked because the impact wasn’t mapped</li>
+<li>Developers write PRs with vague test instructions like “test that it works”</li>
+<li>QA engineers spend hours reading diffs to understand what actually changed</li>
+<li>Edge cases get missed because nobody traced every <code>if/else</code> branch in the code</li>
+<li>Security vulnerabilities (missing nonce checks, unsanitized input) slip through</li>
+<li>Regression areas are overlooked because the impact wasn’t mapped</li>
 </ul>
-
 <p>I wanted to solve this by building a system where I type one command, and an AI agent reads the actual code diff, performs white-box analysis, and generates a structured, prioritized test plan that a QA tester can execute immediately.</p>
-
-<hr />
-
+<hr>
 <h2 id="architecture-overview">Architecture Overview</h2>
-
 <p>The system has four components that work in a pipeline:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-</pre></td><td class="rouge-code"><pre>┌─────────────────────────────────────────────────────────────────┐
-│                     /qa-pr 1234                                 │
-│                  (Slash Command)                                │
-│                                                                 │
-│  1. Runs analyze-pr.sh ──► Generates qa-analysis.txt            │
-│  2. Fetches linked GitHub issues for context                    │
-│  3. Invokes qa-agent agent with the analysis                │
-│  4. Agent reads QA reference docs + diff                        │
-│  5. Generates structured test plan                              │
-│  6. Optionally posts test plan to PR description                │
-└─────────────────────────────────────────────────────────────────┘
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>┌─────────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│                     /qa-pr 1234                                 │</span></span>
+<span class="line"><span>│                  (Slash Command)                                │</span></span>
+<span class="line"><span>│                                                                 │</span></span>
+<span class="line"><span>│  1. Runs analyze-pr.sh ──► Generates qa-analysis.txt            │</span></span>
+<span class="line"><span>│  2. Fetches linked GitHub issues for context                    │</span></span>
+<span class="line"><span>│  3. Invokes qa-agent agent with the analysis                │</span></span>
+<span class="line"><span>│  4. Agent reads QA reference docs + diff                        │</span></span>
+<span class="line"><span>│  5. Generates structured test plan                              │</span></span>
+<span class="line"><span>│  6. Optionally posts test plan to PR description                │</span></span>
+<span class="line"><span>└─────────────────────────────────────────────────────────────────┘</span></span></code></pre>
 <p><strong>File structure:</strong></p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-</pre></td><td class="rouge-code"><pre>.claude/
-├── commands/
-│   └── qa-pr.md              # Slash command (orchestrator)
-├── agents/
-│   └── qa-agent.md       # QA agent definition
-├── scripts/
-│   └── analyze-pr.sh         # PR diff analysis script
-└── docs/
-    ├── qa-playbook.md        # QA reference playbook
-    ├── rest-api.md           # REST API endpoints &amp; contracts
-    ├── database-schema.md    # Database tables &amp; relationships
-    ├── architecture.md       # System architecture overview
-    └── test-environments.md  # Environment configs &amp; setup
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>.claude/</span></span>
+<span class="line"><span>├── commands/</span></span>
+<span class="line"><span>│   └── qa-pr.md              # Slash command (orchestrator)</span></span>
+<span class="line"><span>├── agents/</span></span>
+<span class="line"><span>│   └── qa-agent.md       # QA agent definition</span></span>
+<span class="line"><span>├── scripts/</span></span>
+<span class="line"><span>│   └── analyze-pr.sh         # PR diff analysis script</span></span>
+<span class="line"><span>└── docs/</span></span>
+<span class="line"><span>    ├── qa-playbook.md        # QA reference playbook</span></span>
+<span class="line"><span>    ├── rest-api.md           # REST API endpoints &#x26; contracts</span></span>
+<span class="line"><span>    ├── database-schema.md    # Database tables &#x26; relationships</span></span>
+<span class="line"><span>    ├── architecture.md       # System architecture overview</span></span>
+<span class="line"><span>    └── test-environments.md  # Environment configs &#x26; setup</span></span></code></pre>
 <p>Let’s break down each component.</p>
-
-<hr />
-
+<hr>
 <h2 id="component-1-the-pr-analysis-shell-script">Component 1: The PR Analysis Shell Script</h2>
-
-<p><strong>File:</strong> <code class="language-plaintext highlighter-rouge">.claude/scripts/analyze-pr.sh</code></p>
-
-<p>This is the foundation — a bash script that extracts everything the AI agent needs from a PR. It uses the GitHub CLI (<code class="language-plaintext highlighter-rouge">gh</code>) and <code class="language-plaintext highlighter-rouge">git diff</code> to produce a structured analysis file.</p>
-
+<p><strong>File:</strong> <code>.claude/scripts/analyze-pr.sh</code></p>
+<p>This is the foundation — a bash script that extracts everything the AI agent needs from a PR. It uses the GitHub CLI (<code>gh</code>) and <code>git diff</code> to produce a structured analysis file.</p>
 <h3 id="what-it-does">What It Does</h3>
-
 <p>The script accepts a PR number (or two branch refs) and generates a comprehensive analysis covering:</p>
-
 <ol>
-  <li><strong>PR metadata</strong> — title, author, description, labels, review instructions</li>
-  <li><strong>Commit history</strong> — categorized by type (bug fix, feature, refactor, test, docs)</li>
-  <li><strong>Changed files summary</strong> — categorized into Frontend, Backend, API, Database, Test, Docs, Config</li>
-  <li><strong>Code statistics</strong> — lines added/removed per file type</li>
-  <li><strong>Feature detection</strong> — new classes, functions, REST endpoints, database operations, form changes</li>
-  <li><strong>Domain-specific change detection</strong> — SEO meta, schema, sitemaps, social meta, redirects, settings, etc.</li>
-  <li><strong>Testing requirements analysis</strong> — flags which test types are needed (unit, integration, E2E, API, visual, performance, accessibility)</li>
-  <li><strong>Framework-specific patterns</strong> — routes, middleware, hooks, cron jobs, caching</li>
-  <li><strong>User roles &amp; permissions</strong> — capability checks that need role-based testing</li>
-  <li><strong>Data flow analysis</strong> — input sources (superglobals) and output points that need escaping</li>
-  <li><strong>Full file-by-file diff</strong> — the actual code changes with configurable context lines</li>
-  <li><strong>Complexity score</strong> — a calculated score that estimates testing effort</li>
+<li><strong>PR metadata</strong> — title, author, description, labels, review instructions</li>
+<li><strong>Commit history</strong> — categorized by type (bug fix, feature, refactor, test, docs)</li>
+<li><strong>Changed files summary</strong> — categorized into Frontend, Backend, API, Database, Test, Docs, Config</li>
+<li><strong>Code statistics</strong> — lines added/removed per file type</li>
+<li><strong>Feature detection</strong> — new classes, functions, REST endpoints, database operations, form changes</li>
+<li><strong>Domain-specific change detection</strong> — SEO meta, schema, sitemaps, social meta, redirects, settings, etc.</li>
+<li><strong>Testing requirements analysis</strong> — flags which test types are needed (unit, integration, E2E, API, visual, performance, accessibility)</li>
+<li><strong>Framework-specific patterns</strong> — routes, middleware, hooks, cron jobs, caching</li>
+<li><strong>User roles &#x26; permissions</strong> — capability checks that need role-based testing</li>
+<li><strong>Data flow analysis</strong> — input sources (superglobals) and output points that need escaping</li>
+<li><strong>Full file-by-file diff</strong> — the actual code changes with configurable context lines</li>
+<li><strong>Complexity score</strong> — a calculated score that estimates testing effort</li>
 </ol>
-
 <h3 id="key-implementation-details">Key Implementation Details</h3>
-
 <p><strong>Cached git operations for performance:</strong></p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-</pre></td><td class="rouge-code"><pre><span class="c"># Cache all git diff operations at the start to avoid repeated git calls</span>
-<span class="nv">CHANGED_FILES</span><span class="o">=</span><span class="si">$(</span>git diff <span class="nt">--name-only</span> <span class="s2">"</span><span class="nv">$BASE_REF</span><span class="s2">...</span><span class="nv">$HEAD_REF</span><span class="s2">"</span><span class="si">)</span>
-<span class="nv">PHP_FILES_LIST</span><span class="o">=</span><span class="si">$(</span><span class="nb">echo</span> <span class="s2">"</span><span class="nv">$CHANGED_FILES</span><span class="s2">"</span> | <span class="nb">grep</span> <span class="s1">'\.php$'</span> <span class="o">||</span> <span class="nb">true</span><span class="si">)</span>
-<span class="nv">JS_FILES_LIST</span><span class="o">=</span><span class="si">$(</span><span class="nb">echo</span> <span class="s2">"</span><span class="nv">$CHANGED_FILES</span><span class="s2">"</span> | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'\.(js|vue|jsx|tsx|ts)$'</span> <span class="o">||</span> <span class="nb">true</span><span class="si">)</span>
-
-<span class="k">if</span> <span class="o">[</span> <span class="nt">-n</span> <span class="s2">"</span><span class="nv">$PHP_FILES_LIST</span><span class="s2">"</span> <span class="o">]</span><span class="p">;</span> <span class="k">then
-    </span><span class="nv">PHP_DIFF</span><span class="o">=</span><span class="si">$(</span><span class="nb">echo</span> <span class="s2">"</span><span class="nv">$PHP_FILES_LIST</span><span class="s2">"</span> | xargs <span class="nt">-I</span> <span class="o">{}</span> git diff <span class="s2">"</span><span class="nv">$BASE_REF</span><span class="s2">...</span><span class="nv">$HEAD_REF</span><span class="s2">"</span> <span class="nt">--</span> <span class="o">{}</span> 2&gt;/dev/null <span class="o">||</span> <span class="nb">true</span><span class="si">)</span>
-<span class="k">fi</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<p>The script caches the full diff at startup so all subsequent pattern matching operates on in-memory strings rather than re-running <code class="language-plaintext highlighter-rouge">git diff</code> for each check. This is important because the script runs 30+ pattern detections.</p>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Cache all git diff operations at the start to avoid repeated git calls</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">CHANGED_FILES</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$(</span><span style="color:#6F42C1;--shiki-dark:#B392F0">git</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> diff</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> --name-only</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$BASE_REF</span><span style="color:#032F62;--shiki-dark:#9ECBFF">...</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$HEAD_REF</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">PHP_FILES_LIST</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">echo</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$CHANGED_FILES</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> grep</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '\.php$'</span><span style="color:#D73A49;--shiki-dark:#F97583"> ||</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> true</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">JS_FILES_LIST</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">echo</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$CHANGED_FILES</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -E</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '\.(js|vue|jsx|tsx|ts)$'</span><span style="color:#D73A49;--shiki-dark:#F97583"> ||</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> true</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ </span><span style="color:#D73A49;--shiki-dark:#F97583">-n</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$PHP_FILES_LIST</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ]; </span><span style="color:#D73A49;--shiki-dark:#F97583">then</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    PHP_DIFF</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">echo</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$PHP_FILES_LIST</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> xargs</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -I</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> {}</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> git</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> diff</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$BASE_REF</span><span style="color:#032F62;--shiki-dark:#9ECBFF">...</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$HEAD_REF</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> --</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> {}</span><span style="color:#D73A49;--shiki-dark:#F97583"> 2></span><span style="color:#032F62;--shiki-dark:#9ECBFF">/dev/null</span><span style="color:#D73A49;--shiki-dark:#F97583"> ||</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> true</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">fi</span></span></code></pre>
+<p>The script caches the full diff at startup so all subsequent pattern matching operates on in-memory strings rather than re-running <code>git diff</code> for each check. This is important because the script runs 30+ pattern detections.</p>
 <p><strong>Single-pass file categorization with awk:</strong></p>
-
-<p>Instead of running multiple <code class="language-plaintext highlighter-rouge">grep</code> commands over the file list, the script uses a single <code class="language-plaintext highlighter-rouge">awk</code> pass to categorize all files:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-</pre></td><td class="rouge-code"><pre><span class="nb">echo</span> <span class="s2">"</span><span class="nv">$CHANGED_FILES</span><span class="s2">"</span> | <span class="nb">awk</span> <span class="s1">'
-BEGIN { frontend_count=0; backend_count=0; api_count=0; ... }
-{
-    file = $0
-    if (file ~ /\.vue$/) { frontend[++frontend_count] = file }
-    else if (file ~ /\.php$/) {
-        backend[++backend_count] = file
-        if (file ~ /(api|rest|endpoint|ajax)/) api[++api_count] = file
-    }
-    ...
-}
-END { ... }'</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<p>Instead of running multiple <code>grep</code> commands over the file list, the script uses a single <code>awk</code> pass to categorize all files:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">echo</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$CHANGED_FILES</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> awk</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">BEGIN { frontend_count=0; backend_count=0; api_count=0; ... }</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">{</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    file = $0</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    if (file ~ /\.vue$/) { frontend[++frontend_count] = file }</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    else if (file ~ /\.php$/) {</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">        backend[++backend_count] = file</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">        if (file ~ /(api|rest|endpoint|ajax)/) api[++api_count] = file</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    }</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    ...</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">}</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">END { ... }'</span></span></code></pre>
 <p><strong>Smart commit categorization:</strong></p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-</pre></td><td class="rouge-code"><pre>git log <span class="nt">--oneline</span> <span class="nt">--no-merges</span> <span class="s2">"</span><span class="nv">$BASE_REF</span><span class="s2">..</span><span class="nv">$HEAD_REF</span><span class="s2">"</span> | <span class="k">while </span><span class="nb">read</span> <span class="nt">-r</span> commit_line<span class="p">;</span> <span class="k">do
-    if </span><span class="nb">echo</span> <span class="s2">"</span><span class="nv">$commit_msg</span><span class="s2">"</span> | <span class="nb">grep</span> <span class="nt">-iE</span> <span class="s1">'(fix|bug|issue|resolve|close)'</span> <span class="o">&gt;</span> /dev/null<span class="p">;</span> <span class="k">then
-        </span><span class="nb">echo</span> <span class="s2">"BUG FIX: </span><span class="nv">$commit_line</span><span class="s2">"</span>
-    <span class="k">elif </span><span class="nb">echo</span> <span class="s2">"</span><span class="nv">$commit_msg</span><span class="s2">"</span> | <span class="nb">grep</span> <span class="nt">-iE</span> <span class="s1">'(feat|feature|add|new)'</span> <span class="o">&gt;</span> /dev/null<span class="p">;</span> <span class="k">then
-        </span><span class="nb">echo</span> <span class="s2">"NEW FEATURE: </span><span class="nv">$commit_line</span><span class="s2">"</span>
-    <span class="k">fi
-done</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">git</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> log</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> --oneline</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> --no-merges</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$BASE_REF</span><span style="color:#032F62;--shiki-dark:#9ECBFF">..</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$HEAD_REF</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#D73A49;--shiki-dark:#F97583"> while</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> read</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -r</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> commit_line</span><span style="color:#24292E;--shiki-dark:#E1E4E8">; </span><span style="color:#D73A49;--shiki-dark:#F97583">do</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    if</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> echo</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$commit_msg</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -iE</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '(fix|bug|issue|resolve|close)'</span><span style="color:#D73A49;--shiki-dark:#F97583"> ></span><span style="color:#032F62;--shiki-dark:#9ECBFF"> /dev/null</span><span style="color:#24292E;--shiki-dark:#E1E4E8">; </span><span style="color:#D73A49;--shiki-dark:#F97583">then</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">        echo</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "BUG FIX: </span><span style="color:#24292E;--shiki-dark:#E1E4E8">$commit_line</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    elif</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> echo</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$commit_msg</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -iE</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '(feat|feature|add|new)'</span><span style="color:#D73A49;--shiki-dark:#F97583"> ></span><span style="color:#032F62;--shiki-dark:#9ECBFF"> /dev/null</span><span style="color:#24292E;--shiki-dark:#E1E4E8">; </span><span style="color:#D73A49;--shiki-dark:#F97583">then</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">        echo</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "NEW FEATURE: </span><span style="color:#24292E;--shiki-dark:#E1E4E8">$commit_line</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    fi</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">done</span></span></code></pre>
 <p><strong>Complexity scoring:</strong></p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-</pre></td><td class="rouge-code"><pre><span class="nv">COMPLEXITY_SCORE</span><span class="o">=</span>0
-<span class="nv">COMPLEXITY_SCORE</span><span class="o">=</span><span class="k">$((</span>COMPLEXITY_SCORE <span class="o">+</span> NEW_FUNCTIONS_COUNT<span class="k">))</span>
-<span class="nv">COMPLEXITY_SCORE</span><span class="o">=</span><span class="k">$((</span>COMPLEXITY_SCORE <span class="o">+</span> NEW_CLASSES_COUNT <span class="o">*</span> <span class="m">2</span><span class="k">))</span>
-<span class="nv">COMPLEXITY_SCORE</span><span class="o">=</span><span class="k">$((</span>COMPLEXITY_SCORE <span class="o">+</span> REST_ENDPOINTS_COUNT <span class="o">*</span> <span class="m">3</span><span class="k">))</span>
-<span class="nv">COMPLEXITY_SCORE</span><span class="o">=</span><span class="k">$((</span>COMPLEXITY_SCORE <span class="o">+</span> DB_OPERATIONS_COUNT <span class="o">*</span> <span class="m">2</span><span class="k">))</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">COMPLEXITY_SCORE</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">0</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">COMPLEXITY_SCORE</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$((</span><span style="color:#6F42C1;--shiki-dark:#B392F0">COMPLEXITY_SCORE</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> +</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> NEW_FUNCTIONS_COUNT</span><span style="color:#24292E;--shiki-dark:#E1E4E8">))</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">COMPLEXITY_SCORE</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$((</span><span style="color:#6F42C1;--shiki-dark:#B392F0">COMPLEXITY_SCORE</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> +</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> NEW_CLASSES_COUNT</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> *</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 2</span><span style="color:#24292E;--shiki-dark:#E1E4E8">))</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">COMPLEXITY_SCORE</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$((</span><span style="color:#6F42C1;--shiki-dark:#B392F0">COMPLEXITY_SCORE</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> +</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> REST_ENDPOINTS_COUNT</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> *</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 3</span><span style="color:#24292E;--shiki-dark:#E1E4E8">))</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">COMPLEXITY_SCORE</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$((</span><span style="color:#6F42C1;--shiki-dark:#B392F0">COMPLEXITY_SCORE</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> +</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> DB_OPERATIONS_COUNT</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> *</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 2</span><span style="color:#24292E;--shiki-dark:#E1E4E8">))</span></span></code></pre>
 <p>Each type of change is weighted differently. REST endpoints get 3x because they need auth, validation, and response testing. Database operations get 2x because they need data integrity testing.</p>
-
 <h3 id="usage">Usage</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-</pre></td><td class="rouge-code"><pre><span class="c"># Analyze a PR by number</span>
-./analyze-pr.sh 1234 <span class="nt">--output-file</span><span class="o">=</span>qa-analysis.txt
-
-<span class="c"># Analyze local branches</span>
-./analyze-pr.sh main feature-branch
-
-<span class="c"># Compact mode for small PRs</span>
-./analyze-pr.sh 1234 <span class="nt">--compact</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<hr />
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Analyze a PR by number</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">./analyze-pr.sh</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1234</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> --output-file=qa-analysis.txt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Analyze local branches</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">./analyze-pr.sh</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> main</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> feature-branch</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Compact mode for small PRs</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">./analyze-pr.sh</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1234</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> --compact</span></span></code></pre>
+<hr>
 <h2 id="component-2-the-slash-command-orchestrator">Component 2: The Slash Command (Orchestrator)</h2>
-
-<p><strong>File:</strong> <code class="language-plaintext highlighter-rouge">.claude/commands/qa-pr.md</code></p>
-
-<p>This is the entry point — a Claude Code custom slash command that orchestrates the entire pipeline. When you type <code class="language-plaintext highlighter-rouge">/qa-pr 1234</code> in Claude Code, this file defines what happens.</p>
-
+<p><strong>File:</strong> <code>.claude/commands/qa-pr.md</code></p>
+<p>This is the entry point — a Claude Code custom slash command that orchestrates the entire pipeline. When you type <code>/qa-pr 1234</code> in Claude Code, this file defines what happens.</p>
 <h3 id="the-orchestration-flow">The Orchestration Flow</h3>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-</pre></td><td class="rouge-code"><pre><span class="nn">---</span>
-<span class="na">description</span><span class="pi">:</span> <span class="s">Run QA analysis on a PR and generate a comprehensive test plan</span>
-<span class="na">argument-hint</span><span class="pi">:</span> <span class="s">&lt;pr-number&gt; [max]</span>
-<span class="na">allowed-tools</span><span class="pi">:</span> <span class="s">Bash, Read, Write, Task</span>
-<span class="nn">---</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">---</span></span>
+<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">description</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">Run QA analysis on a PR and generate a comprehensive test plan</span></span>
+<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">argument-hint</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">&#x3C;pr-number> [max]</span></span>
+<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">allowed-tools</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">Bash, Read, Write, Task</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">---</span></span></code></pre>
 <p><strong>Step 1: Parse arguments and run the analysis script</strong></p>
-
-<p>The command accepts a PR number and an optional <code class="language-plaintext highlighter-rouge">max</code> flag. It runs the shell script to generate the analysis file:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-</pre></td><td class="rouge-code"><pre><span class="nb">cd</span> <span class="s2">"</span><span class="si">$(</span>git rev-parse <span class="nt">--show-toplevel</span><span class="si">)</span><span class="s2">"</span>
-.claude/scripts/analyze-pr.sh PR_NUM <span class="nt">--output-file</span><span class="o">=</span>qa-analysis.txt
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<p>The command accepts a PR number and an optional <code>max</code> flag. It runs the shell script to generate the analysis file:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">cd</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "$(</span><span style="color:#6F42C1;--shiki-dark:#B392F0">git</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> rev-parse </span><span style="color:#005CC5;--shiki-dark:#79B8FF">--show-toplevel</span><span style="color:#032F62;--shiki-dark:#9ECBFF">)"</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">.claude/scripts/analyze-pr.sh</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> PR_NUM</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> --output-file=qa-analysis.txt</span></span></code></pre>
 <p><strong>Step 2: Read the generated analysis</strong></p>
-
-<p>Claude Code reads the <code class="language-plaintext highlighter-rouge">qa-analysis.txt</code> file to understand the full context of the PR.</p>
-
+<p>Claude Code reads the <code>qa-analysis.txt</code> file to understand the full context of the PR.</p>
 <p><strong>Step 3: Fetch linked GitHub issues for deeper context</strong></p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-</pre></td><td class="rouge-code"><pre>gh <span class="nb">pr </span>view PR_NUM <span class="nt">--json</span> body <span class="nt">-q</span> <span class="s1">'.body'</span> | <span class="nb">grep</span> <span class="nt">-oE</span> <span class="s1">'(Fixes|Closes|Resolves|Related to) #[0-9]+'</span> | <span class="nb">grep</span> <span class="nt">-oE</span> <span class="s1">'[0-9]+'</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">gh</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> pr</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> view</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> PR_NUM</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> --json</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> body</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -q</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '.body'</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -oE</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '(Fixes|Closes|Resolves|Related to) #[0-9]+'</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -oE</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '[0-9]+'</span></span></code></pre>
 <p>For each linked issue, it fetches the full issue context:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-</pre></td><td class="rouge-code"><pre>gh issue view <span class="o">{</span>ISSUE_NUMBER<span class="o">}</span> <span class="nt">--json</span> title,body,comments
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">gh</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> issue</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> view</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> {ISSUE_NUMBER}</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> --json</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> title,body,comments</span></span></code></pre>
 <p>This is a critical design decision: <strong>linked issues are used to enrich test cases, not dumped into the output</strong>. Bug reports from issues get synthesized into better test cases with specific reproduction steps.</p>
-
 <p><strong>Step 4: Invoke the QA agent</strong></p>
-
-<p>The command passes the analysis content, linked issue context, and QA mode (default or max) to the <code class="language-plaintext highlighter-rouge">qa-agent</code> subagent.</p>
-
+<p>The command passes the analysis content, linked issue context, and QA mode (default or max) to the <code>qa-agent</code> subagent.</p>
 <p><strong>Step 5: Post to PR description (with user confirmation)</strong></p>
-
 <p>After generation, the command asks if you want to add the test plan to the PR. If yes, it:</p>
 <ul>
-  <li>Wraps the plan in a collapsible <code class="language-plaintext highlighter-rouge">&lt;details&gt;</code> block</li>
-  <li>Inserts it before the “Beta Builds” section (configurable)</li>
-  <li>Replaces any existing test plan (idempotent)</li>
-  <li>Updates the PR via <code class="language-plaintext highlighter-rouge">gh pr edit</code></li>
+<li>Wraps the plan in a collapsible <code>&#x3C;details></code> block</li>
+<li>Inserts it before the “Beta Builds” section (configurable)</li>
+<li>Replaces any existing test plan (idempotent)</li>
+<li>Updates the PR via <code>gh pr edit</code></li>
 </ul>
-
 <p>The insertion logic handles edge cases:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-</pre></td><td class="rouge-code"><pre><span class="c"># Split PR body at target section — test plan goes right before it</span>
-<span class="k">if </span><span class="nb">grep</span> <span class="nt">-q</span> <span class="s1">'^### Beta Builds'</span> /tmp/qa-pr-existing-body.md<span class="p">;</span> <span class="k">then
-    </span><span class="nb">csplit</span> <span class="nt">-f</span> /tmp/qa-split- <span class="nt">-s</span> /tmp/qa-pr-existing-body.md <span class="s1">'/^### Beta Builds$/'</span>
-<span class="k">fi</span>
-
-<span class="c"># If an existing QA Test Plan block is present, strip it</span>
-<span class="k">if </span><span class="nb">grep</span> <span class="nt">-q</span> <span class="s1">'QA Test Plan'</span> <span class="s2">"</span><span class="nv">$BEFORE</span><span class="s2">"</span><span class="p">;</span> <span class="k">then
-    </span><span class="nb">sed</span> <span class="s1">'/&lt;details&gt;/{N;/QA Test Plan/,/&lt;\/details&gt;/d}'</span> <span class="s2">"</span><span class="nv">$BEFORE</span><span class="s2">"</span> <span class="o">&gt;</span> /tmp/qa-before-clean.md
-<span class="k">fi</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Split PR body at target section — test plan goes right before it</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">if</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -q</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '^### Beta Builds'</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> /tmp/qa-pr-existing-body.md</span><span style="color:#24292E;--shiki-dark:#E1E4E8">; </span><span style="color:#D73A49;--shiki-dark:#F97583">then</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">    csplit</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -f</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> /tmp/qa-split-</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -s</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> /tmp/qa-pr-existing-body.md</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '/^### Beta Builds$/'</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">fi</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># If an existing QA Test Plan block is present, strip it</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">if</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -q</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'QA Test Plan'</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$BEFORE</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">; </span><span style="color:#D73A49;--shiki-dark:#F97583">then</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">    sed</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '/&#x3C;details>/{N;/QA Test Plan/,/&#x3C;\/details>/d}'</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">$BEFORE</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#D73A49;--shiki-dark:#F97583"> ></span><span style="color:#032F62;--shiki-dark:#9ECBFF"> /tmp/qa-before-clean.md</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">fi</span></span></code></pre>
 <h3 id="two-modes">Two Modes</h3>
-
 <ul>
-  <li><strong><code class="language-plaintext highlighter-rouge">/qa-pr 1234</code></strong> — Default mode: Test Data, Test Cases, Regression Areas, Verification Commands</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">/qa-pr 1234 max</code></strong> — Full mode: adds Quick Test Script (curl commands for API PRs) and Additional Test Considerations (boundary cases, integration tests, security tests)</li>
+<li><strong><code>/qa-pr 1234</code></strong> — Default mode: Test Data, Test Cases, Regression Areas, Verification Commands</li>
+<li><strong><code>/qa-pr 1234 max</code></strong> — Full mode: adds Quick Test Script (curl commands for API PRs) and Additional Test Considerations (boundary cases, integration tests, security tests)</li>
 </ul>
-
-<hr />
-
+<hr>
 <h2 id="component-3-the-qa-agent-test-plan-generator">Component 3: The QA Agent (Test Plan Generator)</h2>
-
-<p><strong>File:</strong> <code class="language-plaintext highlighter-rouge">.claude/agents/qa-agent.md</code></p>
-
+<p><strong>File:</strong> <code>.claude/agents/qa-agent.md</code></p>
 <p>This is the brain of the system — a Claude Code custom agent that acts as an elite QA engineer. It receives the analysis output and generates structured, prioritized test cases.</p>
-
 <h3 id="agent-definition">Agent Definition</h3>
-
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-</pre></td><td class="rouge-code"><pre><span class="nn">---</span>
-<span class="na">name</span><span class="pi">:</span> <span class="s">qa-agent</span>
-<span class="na">description</span><span class="pi">:</span> <span class="s">QA Engineer for comprehensive test case generation</span>
-<span class="na">tools</span><span class="pi">:</span> <span class="s">Read, Write, Bash</span>
-<span class="na">model</span><span class="pi">:</span> <span class="s">sonnet</span>
-<span class="na">color</span><span class="pi">:</span> <span class="s">green</span>
-<span class="nn">---</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">---</span></span>
+<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">name</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">qa-agent</span></span>
+<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">description</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">QA Engineer for comprehensive test case generation</span></span>
+<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">tools</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">Read, Write, Bash</span></span>
+<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">model</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">sonnet</span></span>
+<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">color</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">green</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">---</span></span></code></pre>
 <p>Key choices here:</p>
 <ul>
-  <li><strong><code class="language-plaintext highlighter-rouge">model: sonnet</code></strong> — Uses Sonnet for cost efficiency. The agent generates long, structured output, so using a faster/cheaper model makes sense while the orchestrator (which needs judgment) runs on the default model.</li>
-  <li><strong><code class="language-plaintext highlighter-rouge">tools: Read, Write, Bash</code></strong> — The agent can read reference docs, write the test plan, and run bash commands if needed.</li>
+<li><strong><code>model: sonnet</code></strong> — Uses Sonnet for cost efficiency. The agent generates long, structured output, so using a faster/cheaper model makes sense while the orchestrator (which needs judgment) runs on the default model.</li>
+<li><strong><code>tools: Read, Write, Bash</code></strong> — The agent can read reference docs, write the test plan, and run bash commands if needed.</li>
 </ul>
-
 <h3 id="white-box-testing-approach">White-Box Testing Approach</h3>
-
 <p>This is what makes the system fundamentally different from generic QA. The agent doesn’t just test the feature described in the PR — it reads the actual code diff and derives test cases from the implementation:</p>
-
-<p><strong>Branch coverage:</strong> For every <code class="language-plaintext highlighter-rouge">if/else</code>, <code class="language-plaintext highlighter-rouge">switch/case</code>, and ternary in the diff, it creates test cases that exercise each branch.</p>
-
-<p><strong>Boundary conditions:</strong> If code checks <code class="language-plaintext highlighter-rouge">if ( $count &gt; 10 )</code>, it generates tests with values 9, 10, and 11.</p>
-
-<p><strong>Error paths:</strong> It finds <code class="language-plaintext highlighter-rouge">try/catch</code> blocks, <code class="language-plaintext highlighter-rouge">wp_die()</code>, <code class="language-plaintext highlighter-rouge">return new WP_Error()</code>, and early <code class="language-plaintext highlighter-rouge">return</code> guards, then creates test cases that trigger each error path.</p>
-
+<p><strong>Branch coverage:</strong> For every <code>if/else</code>, <code>switch/case</code>, and ternary in the diff, it creates test cases that exercise each branch.</p>
+<p><strong>Boundary conditions:</strong> If code checks <code>if ( $count > 10 )</code>, it generates tests with values 9, 10, and 11.</p>
+<p><strong>Error paths:</strong> It finds <code>try/catch</code> blocks, <code>wp_die()</code>, <code>return new WP_Error()</code>, and early <code>return</code> guards, then creates test cases that trigger each error path.</p>
 <p><strong>Security analysis:</strong></p>
 <ul>
-  <li>Missing <code class="language-plaintext highlighter-rouge">current_user_can()</code> checks → flagged as P0 security issue</li>
-  <li>Missing <code class="language-plaintext highlighter-rouge">wp_verify_nonce()</code> → flagged with test case</li>
-  <li>Raw SQL without <code class="language-plaintext highlighter-rouge">$wpdb-&gt;prepare()</code> → SQL injection test cases</li>
-  <li>User input without sanitization → XSS test cases</li>
+<li>Missing <code>current_user_can()</code> checks → flagged as P0 security issue</li>
+<li>Missing <code>wp_verify_nonce()</code> → flagged with test case</li>
+<li>Raw SQL without <code>$wpdb->prepare()</code> → SQL injection test cases</li>
+<li>User input without sanitization → XSS test cases</li>
 </ul>
-
-<p><strong>Data type assumptions:</strong> If code uses <code class="language-plaintext highlighter-rouge">intval()</code> but input could be an array, or uses <code class="language-plaintext highlighter-rouge">sanitize_text_field()</code> on HTML content, it creates type mismatch test cases.</p>
-
-<p><strong>Null/empty handling:</strong> If code accesses <code class="language-plaintext highlighter-rouge">$data['key']</code> without existence checks, it generates tests with missing/empty data.</p>
-
+<p><strong>Data type assumptions:</strong> If code uses <code>intval()</code> but input could be an array, or uses <code>sanitize_text_field()</code> on HTML content, it creates type mismatch test cases.</p>
+<p><strong>Null/empty handling:</strong> If code accesses <code>$data['key']</code> without existence checks, it generates tests with missing/empty data.</p>
 <h3 id="the-5-phase-analysis-methodology">The 5-Phase Analysis Methodology</h3>
-
 <p><strong>Phase 1: Context Understanding</strong></p>
 <ul>
-  <li>What changed? (feature, bug fix, refactor)</li>
-  <li>Why? (problem statement from PR description + linked issues)</li>
-  <li>What’s the expected outcome?</li>
-  <li>What did the author think was important to test?</li>
+<li>What changed? (feature, bug fix, refactor)</li>
+<li>Why? (problem statement from PR description + linked issues)</li>
+<li>What’s the expected outcome?</li>
+<li>What did the author think was important to test?</li>
 </ul>
-
 <p><strong>Phase 2: Test Requirement Identification</strong>
 For each relevant area, it identifies what needs testing across 8 categories:</p>
 <ul>
-  <li>Functional (happy path, variations, error messages)</li>
-  <li>Integration (core platform, third-party conflicts, REST API)</li>
-  <li>UI/UX (responsive, browser compat, visual states)</li>
-  <li>Data (CRUD, validation, edge cases)</li>
-  <li>API (auth, validation, response format)</li>
-  <li>Security (XSS, SQLi, CSRF, capability checks)</li>
-  <li>Performance (load times, query efficiency, large data)</li>
-  <li>Accessibility (keyboard nav, screen reader, contrast)</li>
+<li>Functional (happy path, variations, error messages)</li>
+<li>Integration (core platform, third-party conflicts, REST API)</li>
+<li>UI/UX (responsive, browser compat, visual states)</li>
+<li>Data (CRUD, validation, edge cases)</li>
+<li>API (auth, validation, response format)</li>
+<li>Security (XSS, SQLi, CSRF, capability checks)</li>
+<li>Performance (load times, query efficiency, large data)</li>
+<li>Accessibility (keyboard nav, screen reader, contrast)</li>
 </ul>
-
 <p><strong>Phase 3: Test Case Generation</strong>
 Each test case follows a strict format:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-</pre></td><td class="rouge-code"><pre>TEST CASE ID: TC-[MODULE]-[NUMBER]
-MODULE: [Feature Name]
-TYPE: [Functional/Integration/UI/Security/Performance/Accessibility]
-PRIORITY: [P0-Critical/P1-High/P2-Medium/P3-Low]
-
-OBJECTIVE:
-[One sentence describing what this test verifies]
-
-PRECONDITIONS:
-- [Required setup, user role, data state]
-
-TEST STEPS:
-1. [Specific action]
-2. [Specific action]
-
-EXPECTED RESULT:
-- [Specific, verifiable outcome]
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>TEST CASE ID: TC-[MODULE]-[NUMBER]</span></span>
+<span class="line"><span>MODULE: [Feature Name]</span></span>
+<span class="line"><span>TYPE: [Functional/Integration/UI/Security/Performance/Accessibility]</span></span>
+<span class="line"><span>PRIORITY: [P0-Critical/P1-High/P2-Medium/P3-Low]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>OBJECTIVE:</span></span>
+<span class="line"><span>[One sentence describing what this test verifies]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>PRECONDITIONS:</span></span>
+<span class="line"><span>- [Required setup, user role, data state]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>TEST STEPS:</span></span>
+<span class="line"><span>1. [Specific action]</span></span>
+<span class="line"><span>2. [Specific action]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>EXPECTED RESULT:</span></span>
+<span class="line"><span>- [Specific, verifiable outcome]</span></span></code></pre>
 <p><strong>Smart merging rules:</strong> Related scenarios targeting the same function or UI element get merged into a single test case. Instead of 4 separate cases for “empty title”, “null title”, “special chars in title”, “XSS payload in title” — you get one “Title field input validation” case with multiple verification steps.</p>
-
 <p><strong>Phase 4: Output Generation</strong>
 The agent uses mode-aware templates:</p>
 <ul>
-  <li>Default mode: 4 sections (Test Data, Test Cases, Regression Areas, Verification Commands)</li>
-  <li>Max mode: 7 sections (adds Quick Test Script, Additional Test Considerations)</li>
+<li>Default mode: 4 sections (Test Data, Test Cases, Regression Areas, Verification Commands)</li>
+<li>Max mode: 7 sections (adds Quick Test Script, Additional Test Considerations)</li>
 </ul>
-
 <p><strong>Phase 5: Quality Checklist</strong>
 Before finalizing, the agent verifies:</p>
 <ul>
-  <li>All changed features covered</li>
-  <li>Error conditions and boundary cases included</li>
-  <li>Integration points covered</li>
-  <li>Access control tests present</li>
-  <li>Steps are specific and executable</li>
-  <li>Expected results are verifiable</li>
+<li>All changed features covered</li>
+<li>Error conditions and boundary cases included</li>
+<li>Integration points covered</li>
+<li>Access control tests present</li>
+<li>Steps are specific and executable</li>
+<li>Expected results are verifiable</li>
 </ul>
-
 <h3 id="reference-document-system">Reference Document System</h3>
-
 <p>The agent reads domain-specific reference docs based on what the PR touches:</p>
 
-<table>
-  <thead>
-    <tr>
-      <th>PR Touches</th>
-      <th>Agent Reads</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Security, payloads, general QA</td>
-      <td><code class="language-plaintext highlighter-rouge">qa-playbook.md</code></td>
-    </tr>
-    <tr>
-      <td>REST API endpoints</td>
-      <td><code class="language-plaintext highlighter-rouge">rest-api.md</code></td>
-    </tr>
-    <tr>
-      <td>Database, migrations</td>
-      <td><code class="language-plaintext highlighter-rouge">database-schema.md</code></td>
-    </tr>
-    <tr>
-      <td>Meta titles, tag variables</td>
-      <td><code class="language-plaintext highlighter-rouge">smart-tags.md</code></td>
-    </tr>
-    <tr>
-      <td>Settings pages</td>
-      <td><code class="language-plaintext highlighter-rouge">settings-map.md</code></td>
-    </tr>
-    <tr>
-      <td>Cross-feature impact</td>
-      <td><code class="language-plaintext highlighter-rouge">feature-interactions.md</code></td>
-    </tr>
-  </tbody>
-</table>
 
-<p>This gives the agent domain knowledge without stuffing it all into the system prompt. The baseline playbook (<code class="language-plaintext highlighter-rouge">qa-playbook.md</code>) is always read; additional docs are loaded conditionally.</p>
 
-<hr />
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>PR Touches</th><th>Agent Reads</th></tr></thead><tbody><tr><td>Security, payloads, general QA</td><td><code>qa-playbook.md</code></td></tr><tr><td>REST API endpoints</td><td><code>rest-api.md</code></td></tr><tr><td>Database, migrations</td><td><code>database-schema.md</code></td></tr><tr><td>Meta titles, tag variables</td><td><code>smart-tags.md</code></td></tr><tr><td>Settings pages</td><td><code>settings-map.md</code></td></tr><tr><td>Cross-feature impact</td><td><code>feature-interactions.md</code></td></tr></tbody></table>
+<p>This gives the agent domain knowledge without stuffing it all into the system prompt. The baseline playbook (<code>qa-playbook.md</code>) is always read; additional docs are loaded conditionally.</p>
+<hr>
 <h2 id="component-4-the-qa-reference-playbook">Component 4: The QA Reference Playbook</h2>
-
-<p><strong>File:</strong> <code class="language-plaintext highlighter-rouge">.claude/docs/qa-playbook.md</code> (your project’s equivalent)</p>
-
+<p><strong>File:</strong> <code>.claude/docs/qa-playbook.md</code> (your project’s equivalent)</p>
 <p>This is the agent’s domain knowledge — a curated reference that teaches it how to test your specific application. It includes:</p>
-
 <h3 id="security-testing-payloads">Security Testing Payloads</h3>
-
 <p>Pre-built payloads organized by attack type:</p>
-
 <p><strong>XSS payloads</strong> — basic, event handlers, encoded, and platform-specific (shortcode context, block editor context):</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-</pre></td><td class="rouge-code"><pre>&lt;script&gt;alert('XSS')&lt;/script&gt;
-" onmouseover="alert('XSS')
-%3Cscript%3Ealert(1)%3C/script%3E
-[shortcode attr="&lt;script&gt;alert(1)&lt;/script&gt;"]
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>&#x3C;script>alert('XSS')&#x3C;/script></span></span>
+<span class="line"><span>" onmouseover="alert('XSS')</span></span>
+<span class="line"><span>%3Cscript%3Ealert(1)%3C/script%3E</span></span>
+<span class="line"><span>[shortcode attr="&#x3C;script>alert(1)&#x3C;/script>"]</span></span></code></pre>
 <p><strong>SQL injection payloads</strong> — basic, union-based, time-based:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-</pre></td><td class="rouge-code"><pre>' OR '1'='1
-' UNION SELECT user_login,user_pass,3 FROM wp_users--
-' AND SLEEP(5)--
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>' OR '1'='1</span></span>
+<span class="line"><span>' UNION SELECT user_login,user_pass,3 FROM wp_users--</span></span>
+<span class="line"><span>' AND SLEEP(5)--</span></span></code></pre>
 <p><strong>CSRF testing commands:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-</pre></td><td class="rouge-code"><pre><span class="c"># Test without nonce</span>
-curl <span class="nt">-X</span> POST <span class="s2">"https://site.com/wp-admin/admin-ajax.php"</span> <span class="se">\</span>
-  <span class="nt">-d</span> <span class="s2">"action=your_action&amp;data=test"</span> <span class="se">\</span>
-  <span class="nt">-H</span> <span class="s2">"Cookie: session_token=..."</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Test without nonce</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">curl</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -X</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> POST</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "https://site.com/wp-admin/admin-ajax.php"</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> \</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">  -d</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "action=your_action&#x26;data=test"</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> \</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">  -H</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "Cookie: session_token=..."</span></span></code></pre>
 <h3 id="verification-commands">Verification Commands</h3>
-
 <p>Ready-to-use commands for verifying different aspects of your application:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-</pre></td><td class="rouge-code"><pre><span class="c"># Check meta tags</span>
-curl <span class="nt">-s</span> <span class="s2">"https://site.com/page/"</span> | <span class="nb">grep</span> <span class="nt">-oP</span> <span class="s1">'name="description" content="\K[^"]+'</span>
-
-<span class="c"># Extract JSON-LD schema</span>
-curl <span class="nt">-s</span> <span class="s2">"https://site.com/page/"</span> | <span class="se">\</span>
-  <span class="nb">grep</span> <span class="nt">-oP</span> <span class="s1">'&lt;script type="application/ld\+json"&gt;\K[^&lt;]+'</span> | <span class="se">\</span>
-  python3 <span class="nt">-m</span> json.tool
-
-<span class="c"># Test redirects</span>
-curl <span class="nt">-sIL</span> <span class="s2">"https://site.com/old-url/"</span> 2&gt;/dev/null | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s2">"HTTP|Location"</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Check meta tags</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">curl</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -s</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "https://site.com/page/"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -oP</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'name="description" content="\K[^"]+'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Extract JSON-LD schema</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">curl</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -s</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "https://site.com/page/"</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> \</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -oP</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '&#x3C;script type="application/ld\+json">\K[^&#x3C;]+'</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> \</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  python3</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -m</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> json.tool</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Test redirects</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">curl</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -sIL</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "https://site.com/old-url/"</span><span style="color:#D73A49;--shiki-dark:#F97583"> 2></span><span style="color:#032F62;--shiki-dark:#9ECBFF">/dev/null</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> grep</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -E</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "HTTP|Location"</span></span></code></pre>
 <h3 id="test-case-templates">Test Case Templates</h3>
-
 <p>Pre-built test case templates for each feature area (SEO meta, schema, sitemaps, social meta, redirects, etc.) that the agent uses as starting points and customizes based on the actual diff.</p>
-
 <h3 id="priority-classification">Priority Classification</h3>
 
-<table>
-  <thead>
-    <tr>
-      <th>Priority</th>
-      <th>When to Use</th>
-      <th>Response</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>P0</strong></td>
-      <td>Security issue, data loss, complete failure</td>
-      <td>Block release</td>
-    </tr>
-    <tr>
-      <td><strong>P1</strong></td>
-      <td>Core feature broken, no workaround</td>
-      <td>Fix this sprint</td>
-    </tr>
-    <tr>
-      <td><strong>P2</strong></td>
-      <td>Feature works with issues, workaround exists</td>
-      <td>Fix next sprint</td>
-    </tr>
-    <tr>
-      <td><strong>P3</strong></td>
-      <td>Cosmetic, minor inconvenience</td>
-      <td>Backlog</td>
-    </tr>
-  </tbody>
-</table>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Priority</th><th>When to Use</th><th>Response</th></tr></thead><tbody><tr><td><strong>P0</strong></td><td>Security issue, data loss, complete failure</td><td>Block release</td></tr><tr><td><strong>P1</strong></td><td>Core feature broken, no workaround</td><td>Fix this sprint</td></tr><tr><td><strong>P2</strong></td><td>Feature works with issues, workaround exists</td><td>Fix next sprint</td></tr><tr><td><strong>P3</strong></td><td>Cosmetic, minor inconvenience</td><td>Backlog</td></tr></tbody></table>
 <h3 id="environment-matrix">Environment Matrix</h3>
-
 <p>Testing environment requirements including runtime versions, database versions, and common test scenarios (fresh install vs upgrade, single instance vs multi-tenant, etc.).</p>
-
-<hr />
-
+<hr>
 <h2 id="how-it-all-works-together">How It All Works Together</h2>
-
-<p>Here’s the complete flow when you run <code class="language-plaintext highlighter-rouge">/qa-pr 1234</code>:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63
-64
-65
-66
-67
-68
-</pre></td><td class="rouge-code"><pre>User types: /qa-pr 1234
-        │
-        ▼
-┌──────────────────────────────┐
-│  qa-pr.md (Slash Command)    │
-│  Parses args: PR=1234        │
-│  QA_MODE=default             │
-└──────────┬───────────────────┘
-           │
-           ▼
-┌──────────────────────────────┐
-│  analyze-pr.sh 1234          │
-│  --output-file=qa-analysis   │
-│                              │
-│  ► gh pr view (metadata)     │
-│  ► git diff (code changes)   │
-│  ► Pattern detection (30+    │
-│    checks for features,      │
-│    security, DB ops, etc.)   │
-│  ► Complexity scoring        │
-│                              │
-│  Output: qa-analysis.txt     │
-└──────────┬───────────────────┘
-           │
-           ▼
-┌──────────────────────────────┐
-│  Fetch linked issues         │
-│  gh issue view #456          │
-│  (bug reports, context)      │
-└──────────┬───────────────────┘
-           │
-           ▼
-┌──────────────────────────────┐
-│  qa-agent Agent          │
-│  (Claude Sonnet)             │
-│                              │
-│  Inputs:                     │
-│  ► qa-analysis.txt           │
-│  ► Linked issue context      │
-│  ► QA_MODE=default           │
-│                              │
-│  Reads reference docs:       │
-│  ► qa-playbook.md (always)   │
-│  ► rest-api.md (if API PR)   │
-│  ► database-schema.md (if    │
-│    DB changes)               │
-│                              │
-│  5-phase analysis:           │
-│  1. Context understanding    │
-│  2. Test requirements        │
-│  3. Test case generation     │
-│  4. Output formatting        │
-│  5. Quality checklist        │
-│                              │
-│  Output: Structured test     │
-│  plan with P0-P3 cases       │
-└──────────┬───────────────────┘
-           │
-           ▼
-┌──────────────────────────────┐
-│  Ask user: Post to PR?       │
-│                              │
-│  If yes:                     │
-│  ► Wrap in &lt;details&gt; block   │
-│  ► Insert before target      │
-│    section in PR body        │
-│  ► gh pr edit --body-file    │
-└──────────────────────────────┘
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<hr />
-
+<p>Here’s the complete flow when you run <code>/qa-pr 1234</code>:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>User types: /qa-pr 1234</span></span>
+<span class="line"><span>        │</span></span>
+<span class="line"><span>        ▼</span></span>
+<span class="line"><span>┌──────────────────────────────┐</span></span>
+<span class="line"><span>│  qa-pr.md (Slash Command)    │</span></span>
+<span class="line"><span>│  Parses args: PR=1234        │</span></span>
+<span class="line"><span>│  QA_MODE=default             │</span></span>
+<span class="line"><span>└──────────┬───────────────────┘</span></span>
+<span class="line"><span>           │</span></span>
+<span class="line"><span>           ▼</span></span>
+<span class="line"><span>┌──────────────────────────────┐</span></span>
+<span class="line"><span>│  analyze-pr.sh 1234          │</span></span>
+<span class="line"><span>│  --output-file=qa-analysis   │</span></span>
+<span class="line"><span>│                              │</span></span>
+<span class="line"><span>│  ► gh pr view (metadata)     │</span></span>
+<span class="line"><span>│  ► git diff (code changes)   │</span></span>
+<span class="line"><span>│  ► Pattern detection (30+    │</span></span>
+<span class="line"><span>│    checks for features,      │</span></span>
+<span class="line"><span>│    security, DB ops, etc.)   │</span></span>
+<span class="line"><span>│  ► Complexity scoring        │</span></span>
+<span class="line"><span>│                              │</span></span>
+<span class="line"><span>│  Output: qa-analysis.txt     │</span></span>
+<span class="line"><span>└──────────┬───────────────────┘</span></span>
+<span class="line"><span>           │</span></span>
+<span class="line"><span>           ▼</span></span>
+<span class="line"><span>┌──────────────────────────────┐</span></span>
+<span class="line"><span>│  Fetch linked issues         │</span></span>
+<span class="line"><span>│  gh issue view #456          │</span></span>
+<span class="line"><span>│  (bug reports, context)      │</span></span>
+<span class="line"><span>└──────────┬───────────────────┘</span></span>
+<span class="line"><span>           │</span></span>
+<span class="line"><span>           ▼</span></span>
+<span class="line"><span>┌──────────────────────────────┐</span></span>
+<span class="line"><span>│  qa-agent Agent          │</span></span>
+<span class="line"><span>│  (Claude Sonnet)             │</span></span>
+<span class="line"><span>│                              │</span></span>
+<span class="line"><span>│  Inputs:                     │</span></span>
+<span class="line"><span>│  ► qa-analysis.txt           │</span></span>
+<span class="line"><span>│  ► Linked issue context      │</span></span>
+<span class="line"><span>│  ► QA_MODE=default           │</span></span>
+<span class="line"><span>│                              │</span></span>
+<span class="line"><span>│  Reads reference docs:       │</span></span>
+<span class="line"><span>│  ► qa-playbook.md (always)   │</span></span>
+<span class="line"><span>│  ► rest-api.md (if API PR)   │</span></span>
+<span class="line"><span>│  ► database-schema.md (if    │</span></span>
+<span class="line"><span>│    DB changes)               │</span></span>
+<span class="line"><span>│                              │</span></span>
+<span class="line"><span>│  5-phase analysis:           │</span></span>
+<span class="line"><span>│  1. Context understanding    │</span></span>
+<span class="line"><span>│  2. Test requirements        │</span></span>
+<span class="line"><span>│  3. Test case generation     │</span></span>
+<span class="line"><span>│  4. Output formatting        │</span></span>
+<span class="line"><span>│  5. Quality checklist        │</span></span>
+<span class="line"><span>│                              │</span></span>
+<span class="line"><span>│  Output: Structured test     │</span></span>
+<span class="line"><span>│  plan with P0-P3 cases       │</span></span>
+<span class="line"><span>└──────────┬───────────────────┘</span></span>
+<span class="line"><span>           │</span></span>
+<span class="line"><span>           ▼</span></span>
+<span class="line"><span>┌──────────────────────────────┐</span></span>
+<span class="line"><span>│  Ask user: Post to PR?       │</span></span>
+<span class="line"><span>│                              │</span></span>
+<span class="line"><span>│  If yes:                     │</span></span>
+<span class="line"><span>│  ► Wrap in &#x3C;details> block   │</span></span>
+<span class="line"><span>│  ► Insert before target      │</span></span>
+<span class="line"><span>│    section in PR body        │</span></span>
+<span class="line"><span>│  ► gh pr edit --body-file    │</span></span>
+<span class="line"><span>└──────────────────────────────┘</span></span></code></pre>
+<hr>
 <h2 id="the-output-what-you-get">The Output: What You Get</h2>
-
 <h3 id="default-mode-output-structure">Default Mode Output Structure</h3>
-
-<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63
-64
-65
-66
-67
-68
-69
-70
-71
-72
-73
-74
-75
-76
-77
-78
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89
-90
-91
-</pre></td><td class="rouge-code"><pre><span class="gh"># QA Test Plan</span>
-<span class="gt">
-&gt; **Change Type:** Bug Fix | **Risk Level:** High | **Files Changed:** 5 | **Test Cases:** 12 | **Required Plugins:** WooCommerce</span>
-<span class="p">
----
-</span>
-<span class="nt">&lt;details&gt;</span>
-<span class="nt">&lt;summary&gt;&lt;strong&gt;</span>Test Data<span class="nt">&lt;/strong&gt;&lt;/summary&gt;</span>
-
-<span class="gu">### Input Values to Test</span>
-| Value | Purpose |
-|-------|---------|
-| Empty string "" | Tests null/empty handling in save function |
-| String &gt; 160 chars | Tests character limit boundary |
-| <span class="sb">`&lt;script&gt;alert(1)&lt;/script&gt;`</span> | Tests XSS sanitization |
-
-<span class="nt">&lt;/details&gt;</span>
-<span class="p">
----
-</span>
-<span class="nt">&lt;details&gt;</span>
-<span class="nt">&lt;summary&gt;&lt;strong&gt;</span>Test Cases<span class="nt">&lt;/strong&gt;&lt;/summary&gt;</span>
-
-<span class="gu">### P0 - Critical (Must Test)</span>
-
-<span class="nt">&lt;details&gt;</span>
-<span class="nt">&lt;summary&gt;&lt;strong&gt;</span>TC-META-001: SEO Title saves and displays on frontend<span class="nt">&lt;/strong&gt;&lt;/summary&gt;</span>
-
-TEST CASE ID: TC-META-001
-MODULE: SEO Meta
-TYPE: Functional
-PRIORITY: P0-Critical
-
-OBJECTIVE:
-Verify that custom SEO title saves in the editor and renders correctly in the page source.
-
-PRECONDITIONS:
-<span class="p">-</span> Admin panel access
-<span class="p">-</span> Plugin activated
-<span class="p">-</span> At least one published post
-
-TEST STEPS:
-<span class="p">1.</span> Navigate to Posts &gt; Edit any published post
-<span class="p">2.</span> Open the SEO Settings panel
-<span class="p">3.</span> Enter "Custom Test Title | My Site" in the SEO Title field
-<span class="p">4.</span> Click Update
-<span class="p">5.</span> View the post on the frontend
-<span class="p">6.</span> View page source (Ctrl+U)
-
-EXPECTED RESULT:
-<span class="p">-</span> The <span class="nt">&lt;title&gt;</span> tag contains "Custom Test Title | My Site"
-<span class="p">-</span> The og:title meta tag matches
-<span class="p">-</span> No raw variable placeholders visible
-
-<span class="nt">&lt;/details&gt;</span>
-
-<span class="gu">### P1 - High Priority</span>
-[More test cases...]
-
-<span class="gu">### P2 - Medium Priority</span>
-[More test cases...]
-
-<span class="nt">&lt;/details&gt;</span>
-<span class="p">
----
-</span>
-<span class="nt">&lt;details&gt;</span>
-<span class="nt">&lt;summary&gt;&lt;strong&gt;</span>Regression Areas<span class="nt">&lt;/strong&gt;&lt;/summary&gt;</span>
-<span class="p">
--</span> [ ] Existing posts retain their custom SEO titles
-<span class="p">-</span> [ ] Default title format still applies to posts without custom titles
-<span class="p">-</span> [ ] Sitemap URLs remain accessible
-<span class="p">-</span> [ ] Social sharing previews still work
-
-<span class="nt">&lt;/details&gt;</span>
-<span class="p">
----
-</span>
-<span class="nt">&lt;details&gt;</span>
-<span class="nt">&lt;summary&gt;&lt;strong&gt;</span>Verification Commands<span class="nt">&lt;/strong&gt;&lt;/summary&gt;</span>
-
-<span class="gh"># Check title tag on frontend</span>
-curl -s "https://your-site.test/test-post/" | grep -oP '<span class="nt">&lt;title&gt;</span><span class="se">\K</span>[^&lt;]+'
-
-<span class="gh"># Verify meta description</span>
-curl -s "https://your-site.test/test-post/" | grep -oP 'name="description" content="<span class="se">\K</span>[^"]+'
-
-<span class="gh"># Check for duplicate title tags</span>
-curl -s "https://your-site.test/test-post/" | grep -c '<span class="nt">&lt;title&gt;</span>'
-
-<span class="nt">&lt;/details&gt;</span>
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<hr />
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="markdown"><code><span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold"># QA Test Plan</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">> </span><span style="color:#24292E;--shiki-light-font-weight:bold;--shiki-dark:#E1E4E8;--shiki-dark-font-weight:bold">**Change Type:**</span><span style="color:#22863A;--shiki-dark:#85E89D"> Bug Fix | </span><span style="color:#24292E;--shiki-light-font-weight:bold;--shiki-dark:#E1E4E8;--shiki-dark-font-weight:bold">**Risk Level:**</span><span style="color:#22863A;--shiki-dark:#85E89D"> High | </span><span style="color:#24292E;--shiki-light-font-weight:bold;--shiki-dark:#E1E4E8;--shiki-dark-font-weight:bold">**Files Changed:**</span><span style="color:#22863A;--shiki-dark:#85E89D"> 5 | </span><span style="color:#24292E;--shiki-light-font-weight:bold;--shiki-dark:#E1E4E8;--shiki-dark-font-weight:bold">**Test Cases:**</span><span style="color:#22863A;--shiki-dark:#85E89D"> 12 | </span><span style="color:#24292E;--shiki-light-font-weight:bold;--shiki-dark:#E1E4E8;--shiki-dark-font-weight:bold">**Required Plugins:**</span><span style="color:#22863A;--shiki-dark:#85E89D"> WooCommerce</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">---</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;details></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;summary>&#x3C;strong>Test Data&#x3C;/strong>&#x3C;/summary></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">### Input Values to Test</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">| Value | Purpose |</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">|-------|---------|</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">| Empty string "" | Tests null/empty handling in save function |</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">| String > 160 chars | Tests character limit boundary |</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">| </span><span style="color:#005CC5;--shiki-dark:#79B8FF">`&#x3C;script>alert(1)&#x3C;/script>`</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> | Tests XSS sanitization |</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;/details></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">---</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;details></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;summary>&#x3C;strong>Test Cases&#x3C;/strong>&#x3C;/summary></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">### P0 - Critical (Must Test)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;details></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;summary>&#x3C;strong>TC-META-001: SEO Title saves and displays on frontend&#x3C;/strong>&#x3C;/summary></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">TEST CASE ID: TC-META-001</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">MODULE: SEO Meta</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">TYPE: Functional</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">PRIORITY: P0-Critical</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">OBJECTIVE:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">Verify that custom SEO title saves in the editor and renders correctly in the page source.</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">PRECONDITIONS:</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> Admin panel access</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> Plugin activated</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> At least one published post</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">TEST STEPS:</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">1.</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> Navigate to Posts > Edit any published post</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">2.</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> Open the SEO Settings panel</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">3.</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> Enter "Custom Test Title | My Site" in the SEO Title field</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">4.</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> Click Update</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">5.</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> View the post on the frontend</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">6.</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> View page source (Ctrl+U)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">EXPECTED RESULT:</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> The &#x3C;title> tag contains "Custom Test Title | My Site"</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> The og:title meta tag matches</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> No raw variable placeholders visible</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;/details></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">### P1 - High Priority</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">[More test cases...]</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">### P2 - Medium Priority</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">[More test cases...]</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;/details></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">---</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;details></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;summary>&#x3C;strong>Regression Areas&#x3C;/strong>&#x3C;/summary></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ ] Existing posts retain their custom SEO titles</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ ] Default title format still applies to posts without custom titles</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ ] Sitemap URLs remain accessible</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ ] Social sharing previews still work</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;/details></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">---</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;details></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;summary>&#x3C;strong>Verification Commands&#x3C;/strong>&#x3C;/summary></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold"># Check title tag on frontend</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">curl -s "https://your-site.test/test-post/" | grep -oP '&#x3C;title>\K[</span><span style="color:#032F62;--shiki-light-text-decoration:underline;--shiki-dark:#DBEDFF;--shiki-dark-text-decoration:underline">^&#x3C;</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]+'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold"># Verify meta description</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">curl -s "https://your-site.test/test-post/" | grep -oP 'name="description" content="\K[</span><span style="color:#032F62;--shiki-light-text-decoration:underline;--shiki-dark:#DBEDFF;--shiki-dark-text-decoration:underline">^"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]+'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold"># Check for duplicate title tags</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">curl -s "https://your-site.test/test-post/" | grep -c '&#x3C;title>'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;/details></span></span></code></pre>
+<hr>
 <h2 id="step-by-step-implementation-guide">Step-by-Step Implementation Guide</h2>
-
 <h3 id="prerequisites">Prerequisites</h3>
-
 <ul>
-  <li><a href="https://claude.ai/code">Claude Code</a> installed</li>
-  <li><a href="https://cli.github.com/">GitHub CLI</a> (<code class="language-plaintext highlighter-rouge">gh</code>) installed and authenticated</li>
-  <li>A git repository with PRs on GitHub</li>
+<li><a href="https://claude.ai/code">Claude Code</a> installed</li>
+<li><a href="https://cli.github.com/">GitHub CLI</a> (<code>gh</code>) installed and authenticated</li>
+<li>A git repository with PRs on GitHub</li>
 </ul>
-
 <h3 id="step-1-create-the-directory-structure">Step 1: Create the Directory Structure</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-</pre></td><td class="rouge-code"><pre><span class="nb">mkdir</span> <span class="nt">-p</span> .claude/commands .claude/agents .claude/scripts .claude/docs
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">mkdir</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> -p</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> .claude/commands</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> .claude/agents</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> .claude/scripts</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> .claude/docs</span></span></code></pre>
 <h3 id="step-2-create-the-pr-analysis-script">Step 2: Create the PR Analysis Script</h3>
-
-<p>Create <code class="language-plaintext highlighter-rouge">.claude/scripts/analyze-pr.sh</code> and make it executable:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-</pre></td><td class="rouge-code"><pre><span class="nb">chmod</span> +x .claude/scripts/analyze-pr.sh
-</pre></td></tr></tbody></table></code></pre></div></div>
-
+<p>Create <code>.claude/scripts/analyze-pr.sh</code> and make it executable:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">chmod</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> +x</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> .claude/scripts/analyze-pr.sh</span></span></code></pre>
 <p>The script should:</p>
-
 <ol>
-  <li><strong>Accept a PR number or branch refs</strong> as input</li>
-  <li><strong>Validate prerequisites</strong> (git repo, <code class="language-plaintext highlighter-rouge">gh</code> CLI, authentication)</li>
-  <li><strong>Fetch PR metadata</strong> via <code class="language-plaintext highlighter-rouge">gh pr view --json</code></li>
-  <li><strong>Cache the git diff</strong> upfront for performance</li>
-  <li><strong>Categorize changed files</strong> by type (frontend, backend, API, DB, etc.)</li>
-  <li><strong>Detect features and patterns</strong> using regex on the cached diff — look for new classes, functions, REST endpoints, database operations, form changes</li>
-  <li><strong>Detect domain-specific changes</strong> relevant to your application (the specific patterns will vary by project)</li>
-  <li><strong>Analyze testing requirements</strong> — flag which types of testing are needed based on file types changed</li>
-  <li><strong>Detect platform-specific patterns</strong> — routes, middleware, hooks, cron jobs, caching, migrations, etc.</li>
-  <li><strong>Analyze permissions</strong> — find capability/authorization checks in the diff</li>
-  <li><strong>Analyze data flow</strong> — find input sources (user input, request data) and output points</li>
-  <li><strong>Output the full diff</strong> with configurable context lines</li>
-  <li><strong>Calculate a complexity score</strong> to estimate testing effort</li>
+<li><strong>Accept a PR number or branch refs</strong> as input</li>
+<li><strong>Validate prerequisites</strong> (git repo, <code>gh</code> CLI, authentication)</li>
+<li><strong>Fetch PR metadata</strong> via <code>gh pr view --json</code></li>
+<li><strong>Cache the git diff</strong> upfront for performance</li>
+<li><strong>Categorize changed files</strong> by type (frontend, backend, API, DB, etc.)</li>
+<li><strong>Detect features and patterns</strong> using regex on the cached diff — look for new classes, functions, REST endpoints, database operations, form changes</li>
+<li><strong>Detect domain-specific changes</strong> relevant to your application (the specific patterns will vary by project)</li>
+<li><strong>Analyze testing requirements</strong> — flag which types of testing are needed based on file types changed</li>
+<li><strong>Detect platform-specific patterns</strong> — routes, middleware, hooks, cron jobs, caching, migrations, etc.</li>
+<li><strong>Analyze permissions</strong> — find capability/authorization checks in the diff</li>
+<li><strong>Analyze data flow</strong> — find input sources (user input, request data) and output points</li>
+<li><strong>Output the full diff</strong> with configurable context lines</li>
+<li><strong>Calculate a complexity score</strong> to estimate testing effort</li>
 </ol>
-
 <p>The key principle: <strong>extract everything the AI agent needs so it doesn’t have to run git commands itself</strong>. The script is the data preparation layer.</p>
-
 <h3 id="step-3-create-the-qa-agent-definition">Step 3: Create the QA Agent Definition</h3>
-
-<p>Create <code class="language-plaintext highlighter-rouge">.claude/agents/qa-agent.md</code> (or name it for your framework):</p>
-
+<p>Create <code>.claude/agents/qa-agent.md</code> (or name it for your framework):</p>
 <p>The agent definition should include:</p>
-
 <ol>
-  <li><strong>Identity</strong> — Define the agent’s expertise and perspective</li>
-  <li><strong>Mission</strong> — What the agent produces (test cases, not code review)</li>
-  <li><strong>Testing approach</strong> — White-box testing methodology derived from the actual diff</li>
-  <li><strong>Reference document pointers</strong> — Which docs to read based on what the PR touches</li>
-  <li><strong>Input specification</strong> — What the agent receives (analysis file, issue context, mode)</li>
-  <li><strong>Analysis methodology</strong> — The multi-phase approach (context → requirements → generation → formatting → quality check)</li>
-  <li><strong>Test case format</strong> — Exact template with field definitions</li>
-  <li><strong>Merging rules</strong> — When to combine related scenarios into single test cases</li>
-  <li><strong>Output templates</strong> — Mode-aware templates (default vs max)</li>
-  <li><strong>Guidelines</strong> — Do’s and don’ts for test case quality</li>
-  <li><strong>Quality checklist</strong> — Final verification before output</li>
+<li><strong>Identity</strong> — Define the agent’s expertise and perspective</li>
+<li><strong>Mission</strong> — What the agent produces (test cases, not code review)</li>
+<li><strong>Testing approach</strong> — White-box testing methodology derived from the actual diff</li>
+<li><strong>Reference document pointers</strong> — Which docs to read based on what the PR touches</li>
+<li><strong>Input specification</strong> — What the agent receives (analysis file, issue context, mode)</li>
+<li><strong>Analysis methodology</strong> — The multi-phase approach (context → requirements → generation → formatting → quality check)</li>
+<li><strong>Test case format</strong> — Exact template with field definitions</li>
+<li><strong>Merging rules</strong> — When to combine related scenarios into single test cases</li>
+<li><strong>Output templates</strong> — Mode-aware templates (default vs max)</li>
+<li><strong>Guidelines</strong> — Do’s and don’ts for test case quality</li>
+<li><strong>Quality checklist</strong> — Final verification before output</li>
 </ol>
-
 <h3 id="step-4-create-the-slash-command">Step 4: Create the Slash Command</h3>
-
-<p>Create <code class="language-plaintext highlighter-rouge">.claude/commands/qa-pr.md</code>:</p>
-
+<p>Create <code>.claude/commands/qa-pr.md</code>:</p>
 <p>The command should:</p>
-
 <ol>
-  <li><strong>Parse arguments</strong> — Extract PR number and optional mode flag</li>
-  <li><strong>Run the analysis script</strong> — Execute the shell script and capture output</li>
-  <li><strong>Fetch linked issues</strong> — Parse PR body for <code class="language-plaintext highlighter-rouge">Fixes #123</code> patterns, fetch issue details</li>
-  <li><strong>Invoke the agent</strong> — Pass all context to the QA agent</li>
-  <li><strong>Handle PR posting</strong> — Optionally insert the test plan into the PR description (with user confirmation)</li>
+<li><strong>Parse arguments</strong> — Extract PR number and optional mode flag</li>
+<li><strong>Run the analysis script</strong> — Execute the shell script and capture output</li>
+<li><strong>Fetch linked issues</strong> — Parse PR body for <code>Fixes #123</code> patterns, fetch issue details</li>
+<li><strong>Invoke the agent</strong> — Pass all context to the QA agent</li>
+<li><strong>Handle PR posting</strong> — Optionally insert the test plan into the PR description (with user confirmation)</li>
 </ol>
-
 <h3 id="step-5-create-your-qa-reference-playbook">Step 5: Create Your QA Reference Playbook</h3>
-
-<p>Create <code class="language-plaintext highlighter-rouge">.claude/docs/your-qa-playbook.md</code>:</p>
-
+<p>Create <code>.claude/docs/your-qa-playbook.md</code>:</p>
 <p>This is the most project-specific piece. Include:</p>
-
 <ol>
-  <li><strong>Security testing payloads</strong> relevant to your stack</li>
-  <li><strong>Verification commands</strong> for your application’s features</li>
-  <li><strong>Test case templates</strong> for your common change types</li>
-  <li><strong>Priority classification</strong> matching your team’s severity levels</li>
-  <li><strong>Environment matrix</strong> (supported versions, configurations)</li>
-  <li><strong>Common gotchas</strong> specific to your framework/platform</li>
-  <li><strong>Integration testing matrix</strong> (third-party dependencies)</li>
+<li><strong>Security testing payloads</strong> relevant to your stack</li>
+<li><strong>Verification commands</strong> for your application’s features</li>
+<li><strong>Test case templates</strong> for your common change types</li>
+<li><strong>Priority classification</strong> matching your team’s severity levels</li>
+<li><strong>Environment matrix</strong> (supported versions, configurations)</li>
+<li><strong>Common gotchas</strong> specific to your framework/platform</li>
+<li><strong>Integration testing matrix</strong> (third-party dependencies)</li>
 </ol>
-
 <h3 id="step-6-create-additional-reference-documents">Step 6: Create Additional Reference Documents</h3>
-
 <p>For each major feature area of your application, create a focused reference doc that the agent conditionally reads:</p>
-
 <ul>
-  <li><code class="language-plaintext highlighter-rouge">rest-api.md</code> — All API endpoints, request/response formats, auth requirements</li>
-  <li><code class="language-plaintext highlighter-rouge">database-schema.md</code> — Table structures, relationships, migration patterns</li>
-  <li><code class="language-plaintext highlighter-rouge">settings-map.md</code> — All configuration options and their effects</li>
-  <li><code class="language-plaintext highlighter-rouge">feature-interactions.md</code> — How features depend on each other (for regression analysis)</li>
+<li><code>rest-api.md</code> — All API endpoints, request/response formats, auth requirements</li>
+<li><code>database-schema.md</code> — Table structures, relationships, migration patterns</li>
+<li><code>settings-map.md</code> — All configuration options and their effects</li>
+<li><code>feature-interactions.md</code> — How features depend on each other (for regression analysis)</li>
 </ul>
-
 <h3 id="step-7-use-it">Step 7: Use It</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-</pre></td><td class="rouge-code"><pre><span class="c"># Open Claude Code in your project</span>
-claude
-
-<span class="c"># Generate a test plan for PR #1234</span>
-/qa-pr 1234
-
-<span class="c"># Full analysis mode</span>
-/qa-pr 1234 max
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<hr />
-
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Open Claude Code in your project</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">claude</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Generate a test plan for PR #1234</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">/qa-pr</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1234</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Full analysis mode</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">/qa-pr</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1234</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> max</span></span></code></pre>
+<hr>
 <h2 id="key-design-decisions-and-why">Key Design Decisions and Why</h2>
-
 <h3 id="1-shell-script-for-data-extraction-ai-for-analysis">1. Shell Script for Data Extraction, AI for Analysis</h3>
-
 <p>The shell script handles deterministic operations (git diff, file categorization, pattern matching) while the AI handles judgment-based tasks (prioritization, edge case identification, test case writing). This separation means the AI agent receives clean, structured input and can focus on what it’s best at.</p>
-
 <h3 id="2-cached-git-operations">2. Cached Git Operations</h3>
-
-<p>The script caches <code class="language-plaintext highlighter-rouge">git diff</code> output at startup and runs all subsequent pattern matching on the cached strings. Without this, the 30+ detection checks would each spawn a new <code class="language-plaintext highlighter-rouge">git diff</code> process.</p>
-
+<p>The script caches <code>git diff</code> output at startup and runs all subsequent pattern matching on the cached strings. Without this, the 30+ detection checks would each spawn a new <code>git diff</code> process.</p>
 <h3 id="3-sonnet-for-the-agent-default-model-for-orchestration">3. Sonnet for the Agent, Default Model for Orchestration</h3>
-
 <p>The QA agent generates long, structured output where Sonnet excels. The orchestrator (slash command) handles judgment calls like parsing arguments and deciding whether to post to PR — tasks where the default model’s reasoning is valuable.</p>
-
 <h3 id="4-conditional-reference-document-loading">4. Conditional Reference Document Loading</h3>
-
 <p>Instead of stuffing all domain knowledge into the agent’s system prompt, the agent reads reference docs based on what the PR actually touches. A meta-only PR doesn’t need to load the database schema reference.</p>
-
 <h3 id="5-white-box-over-black-box">5. White-Box Over Black-Box</h3>
-
 <p>The agent receives the full code diff, not just a feature description. This enables test cases that trace back to specific code branches, boundary conditions, and error paths — not just “test that the feature works.”</p>
-
 <h3 id="6-linked-issue-integration-without-dumping">6. Linked Issue Integration Without Dumping</h3>
-
 <p>Issue context enriches test cases but doesn’t appear as a separate section. Bug reports become better P0 test cases with specific reproduction steps, not copy-pasted issue descriptions.</p>
-
 <h3 id="7-test-case-merging-rules">7. Test Case Merging Rules</h3>
-
 <p>Related scenarios (empty, null, special chars, XSS for the same field) merge into one test case. This matches how QA testers actually work — you test one area thoroughly, then move on.</p>
-
 <h3 id="8-idempotent-pr-posting">8. Idempotent PR Posting</h3>
-
 <p>The command can be run multiple times on the same PR. It strips any existing test plan before inserting the new one, so you always get a clean update.</p>
-
-<hr />
-
+<hr>
 <h2 id="customizing-for-your-project">Customizing for Your Project</h2>
-
 <h3 id="adapting-for-other-frameworks">Adapting for Other Frameworks</h3>
-
 <p>The architecture is framework-agnostic. To adapt it:</p>
-
 <ol>
-  <li>
-    <p><strong>Shell script:</strong> Change the pattern detection section to match your framework’s patterns (Express routes, Django views, React components, etc.)</p>
-  </li>
-  <li>
-    <p><strong>Agent definition:</strong> Update the testing knowledge to match your stack’s testing patterns (middleware testing, API gateway checks, state management testing, etc.)</p>
-  </li>
-  <li>
-    <p><strong>Reference playbook:</strong> Update security payloads for your stack’s common vulnerabilities and CLI tools.</p>
-  </li>
-  <li>
-    <p><strong>Reference docs:</strong> Create docs for your project’s architecture — API endpoints, database schema, settings, feature interactions.</p>
-  </li>
+<li>
+<p><strong>Shell script:</strong> Change the pattern detection section to match your framework’s patterns (Express routes, Django views, React components, etc.)</p>
+</li>
+<li>
+<p><strong>Agent definition:</strong> Update the testing knowledge to match your stack’s testing patterns (middleware testing, API gateway checks, state management testing, etc.)</p>
+</li>
+<li>
+<p><strong>Reference playbook:</strong> Update security payloads for your stack’s common vulnerabilities and CLI tools.</p>
+</li>
+<li>
+<p><strong>Reference docs:</strong> Create docs for your project’s architecture — API endpoints, database schema, settings, feature interactions.</p>
+</li>
 </ol>
-
 <h3 id="for-different-team-sizes">For Different Team Sizes</h3>
-
 <ul>
-  <li><strong>Solo developer:</strong> Use default mode only. Focus the playbook on your most critical features.</li>
-  <li><strong>Small team:</strong> Add the PR posting feature. Use max mode for high-risk PRs.</li>
-  <li><strong>Large team:</strong> Create multiple reference docs per domain area. Consider adding automated Playwright test generation as a follow-up step.</li>
+<li><strong>Solo developer:</strong> Use default mode only. Focus the playbook on your most critical features.</li>
+<li><strong>Small team:</strong> Add the PR posting feature. Use max mode for high-risk PRs.</li>
+<li><strong>Large team:</strong> Create multiple reference docs per domain area. Consider adding automated Playwright test generation as a follow-up step.</li>
 </ul>
-
 <h3 id="for-different-pr-workflows">For Different PR Workflows</h3>
-
 <ul>
-  <li><strong>If you don’t use “Beta Builds” section:</strong> Change the insertion point in the slash command to wherever you want the test plan placed in the PR body.</li>
-  <li><strong>If you want the test plan as a PR comment instead:</strong> Replace <code class="language-plaintext highlighter-rouge">gh pr edit --body-file</code> with <code class="language-plaintext highlighter-rouge">gh pr comment --body-file</code>.</li>
-  <li><strong>If you want it in a separate file:</strong> Skip the PR posting step and just save the output.</li>
+<li><strong>If you don’t use “Beta Builds” section:</strong> Change the insertion point in the slash command to wherever you want the test plan placed in the PR body.</li>
+<li><strong>If you want the test plan as a PR comment instead:</strong> Replace <code>gh pr edit --body-file</code> with <code>gh pr comment --body-file</code>.</li>
+<li><strong>If you want it in a separate file:</strong> Skip the PR posting step and just save the output.</li>
 </ul>
-
-<hr />
-
+<hr>
 <h2 id="conclusion">Conclusion</h2>
-
 <p>Building this system took iteration, but the architecture is straightforward:</p>
-
 <ol>
-  <li><strong>A shell script</strong> that extracts structured data from PRs</li>
-  <li><strong>A custom agent</strong> that understands QA testing and your domain</li>
-  <li><strong>A slash command</strong> that orchestrates the pipeline</li>
-  <li><strong>Reference documents</strong> that give the agent domain expertise</li>
+<li><strong>A shell script</strong> that extracts structured data from PRs</li>
+<li><strong>A custom agent</strong> that understands QA testing and your domain</li>
+<li><strong>A slash command</strong> that orchestrates the pipeline</li>
+<li><strong>Reference documents</strong> that give the agent domain expertise</li>
 </ol>
-
-<p>The result is a system where typing <code class="language-plaintext highlighter-rouge">/qa-pr 1234</code> produces a comprehensive, prioritized, white-box test plan in under a minute — something that would take a QA engineer hours to produce manually.</p>
-
+<p>The result is a system where typing <code>/qa-pr 1234</code> produces a comprehensive, prioritized, white-box test plan in under a minute — something that would take a QA engineer hours to produce manually.</p>
 <p>The key insight is that <strong>AI is best at synthesis and judgment, not data extraction</strong>. Let shell scripts handle the deterministic parts (git diff, pattern matching), and let the AI focus on what it’s uniquely good at: reading code, understanding intent, identifying edge cases, and structuring test plans that a human can actually execute.</p>
+<p>Every project has different features, patterns, and risk areas. The value isn’t in copying these files verbatim — it’s in understanding the architecture and adapting it to your codebase. Start with the shell script, add the agent, build your playbook, and iterate from there.</p>  </div> <p><small><span class="post-date"><time datetime="2026-04-02">Apr 2, 2026</time></span></small></p> <!-- Categories --> <div class="after-post-cats"> <ul class="tags mb-4"> <li><a href="/categories#AI">AI</a></li><li><a href="/categories#QA">QA</a></li><li><a href="/categories#Test-Generation">Test Generation</a></li> </ul> </div> <!-- Tags --> <div class="after-post-tags"> <ul class="tags"> <li><a href="/tags#ai-agent">#ai-agent</a></li><li><a href="/tags#ci-cd">#ci-cd</a></li><li><a href="/tags#claude-code">#claude-code</a></li><li><a href="/tags#playwright">#playwright</a></li><li><a href="/tags#test-automation">#test-automation</a></li> </ul> </div> <!-- Buy me a coffee --> <div class="post-support" style="margin-top:2rem;padding:1.5rem 0;border-top:1px solid rgba(0,0,0,0.1);font-size:0.95rem;color:#555;">
+If you found this post helpful, consider <a href="https://buymeacoffee.com/islammdshariful" target="_blank" style="color:#A69990;font-weight:600;">buying me a coffee</a>. It keeps me writing!
+</div> <!-- Prev/Next --> <div class="row PageNavigation d-flex justify-content-between font-weight-bold"> <a class="prev d-block col-md-6" href="/blog-post-docker-testing-setup/">&laquo; How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing</a> <a class="next d-block col-md-6 text-lg-right" href="/blog-self-updating-qa-knowledge-base/">How I Built a Self-Updating Knowledge Base That Keeps My AI QA Agent Always in Sync With the Codebase &raquo;</a> <div class="clearfix"></div> </div> </div> </div> </div>  </div> </div> </div> <!-- Footer --> <footer class="footer"> <div class="container text-center"> <div class="footer-links mb-2"> <a href="/">Home</a> <span class="footer-sep">&middot;</span> <a href="/blog">Blogs</a> <span class="footer-sep">&middot;</span> <a href="/categories">Categories</a> <span class="footer-sep">&middot;</span> <a href="/about-me">About Me</a> <span class="footer-sep">&middot;</span> <a href="https://github.com/islammdshariful" target="_blank">GitHub</a> <span class="footer-sep">&middot;</span> <a href="https://www.linkedin.com/in/islamdshariful/" target="_blank">LinkedIn</a> </div> <p class="footer-copy">&copy; 2026 islammdshariful.</p> </div> </footer> <!-- Bootstrap JS --> <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script> <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script> <!-- Dot Grid --> <script src="/scripts/dotgrid.js"></script> <!-- Navbar scroll hide/show --> <script>
+    (function() {
+      var didScroll = false;
+      var lastScrollTop = 0;
+      var delta = 5;
+      var nav = document.querySelector('nav');
+      var navbarHeight = nav.offsetHeight;
 
-<p>Every project has different features, patterns, and risk areas. The value isn’t in copying these files verbatim — it’s in understanding the architecture and adapting it to your codebase. Start with the shell script, add the agent, build your playbook, and iterate from there.</p>
+      window.addEventListener('scroll', function() { didScroll = true; });
 
-            </div>
+      setInterval(function() {
+        if (didScroll) {
+          var st = window.pageYOffset || document.documentElement.scrollTop;
+          if (Math.abs(lastScrollTop - st) <= delta) return;
+          if (st > lastScrollTop && st > navbarHeight) {
+            nav.classList.remove('nav-down');
+            nav.classList.add('nav-up');
+            nav.style.top = -nav.offsetHeight + 'px';
+          } else {
+            if (st + window.innerHeight < document.body.scrollHeight) {
+              nav.classList.remove('nav-up');
+              nav.classList.add('nav-down');
+              nav.style.top = '0px';
+            }
+          }
+          lastScrollTop = st;
+          didScroll = false;
+        }
+      }, 250);
+    })();
+    </script> <!-- Dark mode --> <script>
+    (function () {
+      var toggle = document.getElementById('darkModeToggle');
+      var body = document.body;
+      if (localStorage.getItem('darkMode') === 'true') {
+        body.classList.add('dark-mode');
+      }
+      toggle.addEventListener('click', function () {
+        body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', body.classList.contains('dark-mode'));
+      });
+    })();
+    </script> <!-- Pagefind search --> <script>
+    (function() {
+      var searchIcon = document.querySelector('.nav-search-icon');
+      var searchWrap = document.querySelector('.nav-search');
+      var input = document.getElementById('pagefind-input');
+      var resultsContainer = document.getElementById('pagefind-results');
+      var resultsList = resultsContainer.querySelector('ul');
+      var pagefind = null;
 
-            <!-- Rating -->
-            
+      searchIcon.addEventListener('click', function(e) {
+        e.stopPropagation();
+        searchWrap.classList.toggle('active');
+        if (searchWrap.classList.contains('active')) {
+          input.focus();
+        }
+      });
 
-            <!-- Post Date -->
-            <p>
-            <small>
-                <span class="post-date"><time class="post-date" datetime="2026-04-02">02 Apr 2026</time></span>           
-                
-                </small>
-            </p>
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.nav-search') && !e.target.closest('#pagefind-results')) {
+          searchWrap.classList.remove('active');
+          resultsContainer.classList.remove('visible');
+        }
+      });
 
-            <!-- Post Categories -->
-            <div class="after-post-cats">
-                <ul class="tags mb-4">
-                    
-                    
-                    <li>
-                        <a class="smoothscroll" href="/categories#AI">AI</a>
-                    </li>
-                    
-                    <li>
-                        <a class="smoothscroll" href="/categories#QA">QA</a>
-                    </li>
-                    
-                    <li>
-                        <a class="smoothscroll" href="/categories#Test-Generation">Test Generation</a>
-                    </li>
-                    
-                </ul>
-            </div>
-            <!-- End Categories -->
+      async function loadPagefind() {
+        if (!pagefind) {
+          try {
+            pagefind = await import('/pagefind/pagefind.js');
+            await pagefind.init();
+          } catch (e) {
+            console.warn('Pagefind not available (run a production build first)');
+            return null;
+          }
+        }
+        return pagefind;
+      }
 
-            <!-- Post Tags -->
-            <div class="after-post-tags">
-                <ul class="tags">
-                    
-                    
-                    <li>
-                        <a class="smoothscroll" href="/tags#ai-agent">#ai-agent</a>
-                    </li>
-                    
-                    <li>
-                        <a class="smoothscroll" href="/tags#ci-cd">#ci-cd</a>
-                    </li>
-                    
-                    <li>
-                        <a class="smoothscroll" href="/tags#claude-code">#claude-code</a>
-                    </li>
-                    
-                    <li>
-                        <a class="smoothscroll" href="/tags#playwright">#playwright</a>
-                    </li>
-                    
-                    <li>
-                        <a class="smoothscroll" href="/tags#test-automation">#test-automation</a>
-                    </li>
-                    
-                </ul>
-            </div>
-            <!-- End Tags -->
+      var debounceTimer;
+      input.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async function() {
+          var query = input.value.trim();
+          if (!query) {
+            resultsContainer.classList.remove('visible');
+            resultsList.textContent = '';
+            return;
+          }
 
-            <!-- Buy me a coffee -->
-            <div class="post-support" style="margin-top:2rem;padding:1.5rem 0;border-top:1px solid rgba(0,0,0,0.1);font-size:0.95rem;color:#555;">
-                If you found this post helpful, consider <a href="https://buymeacoffee.com/islammdshariful" target="_blank" style="color:#A69990;font-weight:600;">buying me a coffee</a>. It keeps me writing!
-            </div>
+          var pf = await loadPagefind();
+          if (!pf) return;
 
-            <!-- Prev/Next -->
-            <div class="row PageNavigation d-flex justify-content-between font-weight-bold">
-            
-            <a class="prev d-block col-md-6" href="/blog-post-docker-testing-setup/"> &laquo; How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing</a>
-            
-            
-            <a class="next d-block col-md-6 text-lg-right" href="/blog-self-updating-qa-knowledge-base/">How I Built a Self-Updating Knowledge Base That Keeps My AI QA Agent Always in Sync With the Codebase &raquo; </a>
-            
-            <div class="clearfix"></div>
-            </div>
-            <!-- End Categories -->
+          var search = await pf.search(query);
+          var results = await Promise.all(search.results.slice(0, 10).map(function(r) { return r.data(); }));
 
-        </div>
-        <!-- End Post -->
+          resultsList.textContent = '';
+          if (results.length === 0) {
+            var noResult = document.createElement('li');
+            noResult.style.cssText = 'padding:8px 0;color:#999;';
+            noResult.textContent = 'No results found.';
+            resultsList.appendChild(noResult);
+          } else {
+            results.forEach(function(result) {
+              var li = document.createElement('li');
+              li.className = 'pagefind-result';
+              var a = document.createElement('a');
+              a.href = result.url;
+              var titleSpan = document.createElement('span');
+              titleSpan.className = 'title';
+              titleSpan.textContent = result.meta.title || '';
+              a.appendChild(titleSpan);
+              a.appendChild(document.createElement('br'));
+              var urlSpan = document.createElement('span');
+              urlSpan.className = 'url';
+              urlSpan.textContent = result.url;
+              a.appendChild(urlSpan);
+              a.appendChild(document.createElement('br'));
+              var bodySpan = document.createElement('span');
+              bodySpan.className = 'body';
+              bodySpan.textContent = (result.excerpt || '').replace(/<[^>]*>/g, '').substring(0, 160);
+              a.appendChild(bodySpan);
+              li.appendChild(a);
+              resultsList.appendChild(li);
+            });
+          }
+          resultsContainer.classList.add('visible');
+        }, 200);
+      });
 
-    </div>
-</div>
-<!-- End Article
-================================================== -->
-
-
-<!-- Review with LD-JSON, adapt it for your needs if you like, but make sure you test the generated HTML source code first: 
-https://search.google.com/structured-data/testing-tool/u/0/
-================================================== -->
-
-</div>
-
-
-    
-</div>
-
-</div> <!-- /.site-content -->
-
-<!-- Begin Footer
-================================================== -->
-<footer class="footer">
-    <div class="container text-center">
-        <div class="footer-links mb-2">
-            <a href="/">Home</a>
-            <span class="footer-sep">·</span>
-            <a href="/categories">Categories</a>
-            <span class="footer-sep">·</span>
-            <a href="/about-me">About Me</a>
-            <span class="footer-sep">·</span>
-            <a href="https://github.com/islammdshariful" target="_blank">GitHub</a>
-            <span class="footer-sep">·</span>
-            <a href="https://www.linkedin.com/in/islamdshariful/" target="_blank">LinkedIn</a>
-        </div>
-        <p class="footer-copy">© 2026 islammdshariful.</p>
-    </div>
-</footer>
-<!-- End Footer
-================================================== -->
-
-<!-- Scripts
-================================================== -->
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
-
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
-
-<script src="/assets/js/mediumish.js"></script>
-
-
-
-<script src="/assets/js/ie10-viewport-bug-workaround.js"></script>
-
-<script src="/assets/js/dotgrid.js"></script>
-
-<script src="/assets/js/darkmode.js"></script>
-
-</body>
-</html>
+      document.getElementById('pagefind-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+      });
+    })();
+    </script> </body> </html>
