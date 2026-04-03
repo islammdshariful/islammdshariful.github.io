@@ -16,6 +16,7 @@
 <li><a href="#blog-posts-and-dynamic-routes">Blog Posts and Dynamic Routes</a></li>
 <li><a href="#adding-dark-mode">Adding Dark Mode</a></li>
 <li><a href="#adding-search-with-pagefind">Adding Search with Pagefind</a></li>
+<li><a href="#smooth-page-transitions">Smooth Page Transitions</a></li>
 <li><a href="#seo-sitemap-and-rss">SEO, Sitemap, and RSS</a></li>
 <li><a href="#deploying-to-github-pages">Deploying to GitHub Pages</a></li>
 <li><a href="#wrapping-up">Wrapping Up</a></li>
@@ -30,6 +31,7 @@
 <li><strong>SEO optimization</strong> — meta tags, Open Graph, Twitter Cards, custom sitemap with priority and changefreq</li>
 <li><strong>RSS feed</strong> for subscribers</li>
 <li><strong>Automatic deployment</strong> to GitHub Pages via GitHub Actions</li>
+<li><strong>Smooth page transitions</strong> using Astro’s built-in View Transitions API</li>
 <li><strong>Fast builds</strong> — the entire site builds in under 2 seconds</li>
 </ul>
 <hr>
@@ -308,6 +310,34 @@
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">});</span></span></code></pre>
 <p>Pagefind only works after a production build (it needs the built HTML to index). During development, the search will show a console warning — that’s expected.</p>
 <hr>
+<h2 id="smooth-page-transitions">Smooth Page Transitions</h2>
+<p>Astro has built-in support for the View Transitions API, which gives your site smooth crossfade animations between pages instead of hard reloads — making it feel like a single-page app while staying fully static.</p>
+<p>Add the import and component to your BaseLayout:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="astro"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">---</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> { ViewTransitions } </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'astro:transitions'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">---</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;</span><span style="color:#22863A;--shiki-dark:#85E89D">head</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    &#x3C;!-- your other head content --></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="color:#005CC5;--shiki-dark:#79B8FF">ViewTransitions</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> /></span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">&#x3C;/</span><span style="color:#22863A;--shiki-dark:#85E89D">head</span><span style="color:#24292E;--shiki-dark:#E1E4E8">></span></span></code></pre>
+<p>That’s it — all page navigation will now animate smoothly.</p>
+<p>One gotcha: inline scripts that set up event listeners (like the dark mode toggle) need to re-initialize after each transition. Astro fires an <code>astro:after-swap</code> event for this:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="js"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">function</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> initDarkMode</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  var</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> toggle </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> document.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">getElementById</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'darkModeToggle'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  var</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> body </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> document.body;</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (localStorage.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">getItem</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'darkMode'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">===</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'true'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    body.classList.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">add</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'dark-mode'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  toggle.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">addEventListener</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'click'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#D73A49;--shiki-dark:#F97583">function</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> () {</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    body.classList.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">toggle</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'dark-mode'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    localStorage.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">setItem</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'darkMode'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, body.classList.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">contains</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'dark-mode'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">));</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  });</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">initDarkMode</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">document.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">addEventListener</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'astro:after-swap'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, initDarkMode);</span></span></code></pre>
+<p>This ensures dark mode state persists correctly across page transitions.</p>
+<hr>
 <h2 id="seo-sitemap-and-rss">SEO, Sitemap, and RSS</h2>
 <h3 id="custom-sitemap">Custom Sitemap</h3>
 <p>Instead of using a plugin, create a custom sitemap at <code>src/pages/sitemap.xml.ts</code> that includes <code>priority</code>, <code>changefreq</code>, and <code>lastmod</code>:</p>
@@ -423,6 +453,7 @@
 <li>Zero JavaScript shipped to the browser (unless you explicitly add it)</li>
 <li>Dark mode that remembers the user’s preference</li>
 <li>Full-text search with no external dependencies</li>
+<li>Smooth page transitions that feel like a SPA</li>
 <li>SEO-ready with meta tags, sitemap, and RSS</li>
 <li>Automatic deployment on every push</li>
 </ul>
