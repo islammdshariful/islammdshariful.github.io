@@ -506,13 +506,14 @@ If you found this post helpful, consider <a href="https://buymeacoffee.com/islam
     initDarkMode();
     document.addEventListener('astro:after-swap', initDarkMode);
     </script> <!-- Pagefind search --> <script>
-    (function() {
+    var _pagefind = null;
+
+    function initSearch() {
       var searchIcon = document.querySelector('.nav-search-icon');
       var searchWrap = document.querySelector('.nav-search');
       var input = document.getElementById('pagefind-input');
       var resultsContainer = document.getElementById('pagefind-results');
       var resultsList = resultsContainer.querySelector('ul');
-      var pagefind = null;
 
       searchIcon.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -530,16 +531,55 @@ If you found this post helpful, consider <a href="https://buymeacoffee.com/islam
       });
 
       async function loadPagefind() {
-        if (!pagefind) {
+        if (!_pagefind) {
           try {
-            pagefind = await import('/pagefind/pagefind.js');
-            await pagefind.init();
+            _pagefind = await import('/pagefind/pagefind.js');
+            await _pagefind.init();
           } catch (e) {
             console.warn('Pagefind not available (run a production build first)');
             return null;
           }
         }
-        return pagefind;
+        return _pagefind;
+      }
+
+      function showLoader() {
+        resultsList.textContent = '';
+        var loader = document.createElement('li');
+        loader.className = 'pagefind-loader';
+        loader.style.cssText = 'padding:16px 0;text-align:center;color:#999;font-size:0.85rem;';
+        var bugSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        bugSvg.setAttribute('width', '24');
+        bugSvg.setAttribute('height', '20');
+        bugSvg.setAttribute('viewBox', '0 0 64 56');
+        bugSvg.style.cssText = 'animation:bugWalk 0.3s steps(2) infinite;vertical-align:middle;margin-right:8px;';
+        var c = document.body.classList.contains('dark-mode') ? '#ccc' : '#666';
+        var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('fill', 'none');
+        g.setAttribute('stroke', c);
+        g.setAttribute('stroke-linecap', 'round');
+        g.setAttribute('stroke-linejoin', 'round');
+        g.setAttribute('stroke-width', '2.5');
+        // Simplified bug shape
+        var body = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        body.setAttribute('cx', '32'); body.setAttribute('cy', '30');
+        body.setAttribute('rx', '12'); body.setAttribute('ry', '16');
+        g.appendChild(body);
+        var head = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        head.setAttribute('cx', '32'); head.setAttribute('cy', '12'); head.setAttribute('r', '6');
+        g.appendChild(head);
+        [[18,22,8,18],[18,30,6,30],[18,38,8,42],[46,22,56,18],[46,30,58,30],[46,38,56,42]].forEach(function(l) {
+          var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', l[0]); line.setAttribute('y1', l[1]);
+          line.setAttribute('x2', l[2]); line.setAttribute('y2', l[3]);
+          g.appendChild(line);
+        });
+        bugSvg.appendChild(g);
+        loader.appendChild(bugSvg);
+        var text = document.createTextNode('Finding...');
+        loader.appendChild(text);
+        resultsList.appendChild(loader);
+        resultsContainer.classList.add('visible');
       }
 
       var debounceTimer;
@@ -553,11 +593,20 @@ If you found this post helpful, consider <a href="https://buymeacoffee.com/islam
             return;
           }
 
+          showLoader();
+          var loaderStart = Date.now();
+
           var pf = await loadPagefind();
           if (!pf) return;
 
           var search = await pf.search(query);
           var results = await Promise.all(search.results.slice(0, 10).map(function(r) { return r.data(); }));
+
+          // Ensure loader is visible for at least 500ms
+          var elapsed = Date.now() - loaderStart;
+          if (elapsed < 500) {
+            await new Promise(function(r) { setTimeout(r, 500 - elapsed); });
+          }
 
           resultsList.textContent = '';
           if (results.length === 0) {
@@ -596,5 +645,16 @@ If you found this post helpful, consider <a href="https://buymeacoffee.com/islam
       document.getElementById('pagefind-form').addEventListener('submit', function(e) {
         e.preventDefault();
       });
-    })();
+    }
+
+    // Add bug walk animation keyframes
+    if (!document.getElementById('bugwalk-style')) {
+      var s = document.createElement('style');
+      s.id = 'bugwalk-style';
+      s.textContent = '@keyframes bugWalk { 0% { transform: translateX(0); } 50% { transform: translateX(4px); } 100% { transform: translateX(0); } }';
+      document.head.appendChild(s);
+    }
+
+    initSearch();
+    document.addEventListener('astro:after-swap', initSearch);
     </script> </body> </html>
