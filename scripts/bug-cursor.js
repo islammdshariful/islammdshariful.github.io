@@ -20,6 +20,9 @@ function initBugCursor() {
   var isMoving = false;
   var moveTimer = null;
   var animInterval = null;
+  var lastX = -100;
+  var lastY = -100;
+  var angle = 0;
 
   function getColor() {
     return document.body.classList.contains('dark-mode') ? '#ddd' : '#222';
@@ -126,7 +129,18 @@ function initBugCursor() {
   render();
 
   document.addEventListener('mousemove', function(e) {
-    cursor.style.transform = 'translate(' + (e.clientX - 16) + 'px,' + (e.clientY - 14) + 'px)';
+    var dx = e.clientX - lastX;
+    var dy = e.clientY - lastY;
+
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+      // atan2 gives angle from positive X axis; subtract 90deg so 0 = up (bug faces up by default)
+      angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+    }
+
+    lastX = e.clientX;
+    lastY = e.clientY;
+
+    cursor.style.transform = 'translate(' + (e.clientX - 16) + 'px,' + (e.clientY - 14) + 'px) rotate(' + angle + 'deg)';
 
     if (!isMoving) {
       isMoving = true;
@@ -153,7 +167,9 @@ function initBugCursor() {
   });
 
   document.addEventListener('mouseenter', function(e) {
-    cursor.style.transform = 'translate(' + (e.clientX - 16) + 'px,' + (e.clientY - 14) + 'px)';
+    lastX = e.clientX;
+    lastY = e.clientY;
+    cursor.style.transform = 'translate(' + (e.clientX - 16) + 'px,' + (e.clientY - 14) + 'px) rotate(' + angle + 'deg)';
   });
 }
 
