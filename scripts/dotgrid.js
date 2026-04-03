@@ -1,4 +1,8 @@
-(function () {
+function initDotGrid() {
+  var existing = document.getElementById('dot-grid');
+  if (existing) existing.remove();
+  if (window._dotGridRaf) cancelAnimationFrame(window._dotGridRaf);
+
   var canvas = document.createElement('canvas');
   canvas.id = 'dot-grid';
   canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;';
@@ -11,7 +15,6 @@
   var magnetStrength = 14;
   var mouseX = -9999;
   var mouseY = -9999;
-  var raf;
 
   function resize() {
     canvas.width = window.innerWidth;
@@ -69,8 +72,11 @@
       }
     }
 
-    raf = requestAnimationFrame(draw);
+    window._dotGridRaf = requestAnimationFrame(draw);
   }
 
   draw();
-})();
+}
+
+initDotGrid();
+document.addEventListener('astro:after-swap', initDotGrid);
