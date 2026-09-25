@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>.i{stroke:#222}.f{fill:#222}.s{fill:#fff}@media (prefers-color-scheme:dark){.i{stroke:#eee}.f{fill:#eee}.s{fill:#1a1a1a}}</style>
+  <g transform="translate(0 4)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g class="i" stroke-width="3.2"><line x1="24" y1="10" x2="19" y2="2"/><line x1="40" y1="10" x2="45" y2="2"/></g>
+    <path class="f" d="M22 14 Q22 8 32 8 Q42 8 42 14 Z"/>
+    <path class="i s" d="M18 16 Q18 14 22 14 L42 14 Q46 14 46 16 L46 38 Q46 48 32 48 Q18 48 18 38 Z" stroke-width="3.2"/>
+    <g class="i" stroke-width="3.2"><line x1="18" y1="22" x2="10" y2="18"/><line x1="18" y1="30" x2="10" y2="30"/><line x1="18" y1="38" x2="10" y2="42"/><line x1="46" y1="22" x2="54" y2="18"/><line x1="46" y1="30" x2="54" y2="30"/><line x1="46" y1="38" x2="54" y2="42"/></g>
+    <g class="i" stroke-width="2.4"><circle cx="26" cy="26" r="3"/><line x1="26" y1="29" x2="26" y2="36"/><circle cx="38" cy="22" r="3"/><path d="M38 25 L38 30 Q38 34 34 36"/><line x1="29" y1="26" x2="35" y2="22"/></g>
+  </g>
+</svg>
