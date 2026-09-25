@@ -1,657 +1,217 @@
-<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml"><link rel="alternate icon" href="/assets/images/favicon.ico"><title>How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing | islammdshariful</title><meta name="description" content="How to build a Docker-based multi-site testing environment for WordPress plugin testing with Playwright integration and isolated configurations."><meta name="google-site-verification" content="kI5ETCzLkbONpDOiDEiMP6j_vddLz72R34Rz0Y67iQo"><!-- Open Graph --><meta property="og:title" content="How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing | islammdshariful"><meta property="og:description" content="How to build a Docker-based multi-site testing environment for WordPress plugin testing with Playwright integration and isolated configurations."><meta property="og:image" content="https://islammdshariful.github.io/assets/images/og-default.png"><meta property="og:type" content="article"><meta property="og:url" content="https://islammdshariful.github.io/blog-post-docker-testing-setup/"><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing | islammdshariful"><meta name="twitter:description" content="How to build a Docker-based multi-site testing environment for WordPress plugin testing with Playwright integration and isolated configurations."><meta name="twitter:image" content="https://islammdshariful.github.io/assets/images/og-default.png"><!-- Bootstrap 4.1.3 CSS --><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"><!-- RSS --><link rel="alternate" type="application/rss+xml" title="islammdshariful" href="/rss.xml"><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.CDGfc0hd.js"></script><!-- Google Fonts --><link href="https://fonts.googleapis.com/css?family=Righteous%7CMerriweather:300,300i,400,400i,700,700i" rel="stylesheet"><!-- GA4 --><script async src="https://www.googletagmanager.com/gtag/js?id=G-5M0KQ60CEW"></script><script>
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml"><link rel="alternate icon" href="/assets/images/favicon.ico"><title>How I Run WordPress Plugin E2E Tests in Parallel: A Docker Site Pool and a Pinned Playwright Box | islammdshariful</title><meta name="description" content="How I test a WordPress plugin in parallel: every Playwright worker gets its own WordPress site from a generated Docker pool, and every screenshot is taken inside one pinned Playwright container, so a laptop and CI agree to the pixel."><meta name="google-site-verification" content="kI5ETCzLkbONpDOiDEiMP6j_vddLz72R34Rz0Y67iQo"><!-- Open Graph --><meta property="og:title" content="How I Run WordPress Plugin E2E Tests in Parallel: A Docker Site Pool and a Pinned Playwright Box | islammdshariful"><meta property="og:description" content="How I test a WordPress plugin in parallel: every Playwright worker gets its own WordPress site from a generated Docker pool, and every screenshot is taken inside one pinned Playwright container, so a laptop and CI agree to the pixel."><meta property="og:image" content="https://islammdshariful.github.io/assets/images/og-default.png"><meta property="og:type" content="article"><meta property="og:url" content="https://islammdshariful.github.io/blog-post-docker-testing-setup/"><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="How I Run WordPress Plugin E2E Tests in Parallel: A Docker Site Pool and a Pinned Playwright Box | islammdshariful"><meta name="twitter:description" content="How I test a WordPress plugin in parallel: every Playwright worker gets its own WordPress site from a generated Docker pool, and every screenshot is taken inside one pinned Playwright container, so a laptop and CI agree to the pixel."><meta name="twitter:image" content="https://islammdshariful.github.io/assets/images/og-default.png"><!-- Bootstrap 4.1.3 CSS --><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"><!-- RSS --><link rel="alternate" type="application/rss+xml" title="islammdshariful" href="/rss.xml"><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.CDGfc0hd.js"></script><!-- Google Fonts --><link href="https://fonts.googleapis.com/css?family=Righteous%7CMerriweather:300,300i,400,400i,700,700i" rel="stylesheet"><!-- GA4 --><script async src="https://www.googletagmanager.com/gtag/js?id=G-5M0KQ60CEW"></script><script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-5M0KQ60CEW');
-    </script><link rel="stylesheet" href="/_astro/_slug_.CaRBSV-N.css"></head> <body class="layout-post"> <script>try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}</script> <!-- Site Content --> <div class="site-content"> <div class="container">  <div class="main-content">  <div class="container"> <div class="row"> <div class="col-md-10 mx-auto"> <div class="mainheading"> <!-- Author Box --> <div class="row post-top-meta"> <div class="col-xs-12 col-md-3 col-lg-2 text-center text-md-left mb-4 mb-md-0"> <img class="author-thumb" src="/assets/images/avatar.jpg" alt="islammdshariful"> </div> <div class="col-xs-12 col-md-9 col-lg-10 text-center text-md-left"> <a class="link-dark">islammdshariful</a> <br><span class="author-description">QA Engineer.</span> </div> </div> <h1 class="posttitle" data-pagefind-meta="title">How I Built a Multi-Site Docker Testing Environment for WordPress Plugin Testing</h1> </div>  <div class="article-post" data-pagefind-body>  <p>Testing a plugin across multiple configurations — Lite vs Pro, fresh installs vs existing sites — is painful without a reproducible environment. I built a Docker-based multi-site testing setup that spins up four isolated instances, manages plugin deployment, imports pre-configured databases, and integrates with Playwright for end-to-end testing.</p>
-<p>In this guide, I’ll walk you through every piece of the system so you can adapt it for your own projects.</p>
+    </script><link rel="stylesheet" href="/_astro/_slug_.CiuOnups.css"></head> <body class="layout-post"> <script>try{if(localStorage.getItem('darkMode')==='true')document.body.classList.add('dark-mode')}catch(e){}</script> <!-- Site Content --> <div class="site-content"> <div class="container">  <div class="main-content">  <div class="container"> <div class="row"> <div class="col-md-10 mx-auto"> <div class="mainheading"> <h1 class="posttitle" data-pagefind-meta="title">How I Run WordPress Plugin E2E Tests in Parallel: A Docker Site Pool and a Pinned Playwright Box</h1> </div>  <div class="article-post" data-pagefind-body>  <p>A WordPress plugin has to work on a fresh install and on a site that has run older versions for years. If it has a free and a paid edition, that is four combinations before a single test runs. I test all of them with Playwright, and two problems kept slowing me down:</p>
+<ol>
+<li><strong>Parallel tests fought over one site.</strong> Two workers on the same WordPress install change the same settings, and a test fails because of another test, not because of a bug.</li>
+<li><strong>Screenshots did not match.</strong> A visual test that passed on my Mac failed in CI, because the two machines drew the same page a little differently.</li>
+</ol>
+<p>My setup solves both. Every Playwright worker gets <strong>its own WordPress site</strong> from a pool that is generated for the number of workers. And every screenshot is taken inside <strong>one pinned Playwright container</strong>, so a laptop and CI draw the same pixels.</p>
+<p>This post explains the approach and the traps I hit on the way.</p>
+<hr>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ol>
-<li><a href="#the-problem-why-you-need-this">The Problem: Why You Need This</a></li>
-<li><a href="#architecture-overview">Architecture Overview</a></li>
-<li><a href="#project-structure">Project Structure</a></li>
-<li><a href="#docker-compose-defining-the-multi-site-stack">Docker Compose: Defining the Multi-Site Stack</a></li>
-<li><a href="#the-override-file-local-vs-ci-environments">The Override File: Local vs CI Environments</a></li>
-<li><a href="#the-management-script-automating-everything">The Management Script: Automating Everything</a></li>
-<li><a href="#mu-plugins-custom-rest-api-helpers-for-testing">MU-Plugins: Custom REST API Helpers for Testing</a></li>
-<li><a href="#environment-configuration">Environment Configuration</a></li>
-<li><a href="#integrating-with-playwright-for-e2e-tests">Integrating with Playwright for E2E Tests</a></li>
-<li><a href="#running-the-setup-step-by-step">Running the Setup Step by Step</a></li>
-<li><a href="#cicd-integration-with-buildkite">CI/CD Integration with Buildkite</a></li>
-<li><a href="#troubleshooting-common-issues">Troubleshooting Common Issues</a></li>
+<li><a href="#the-four-variants">The Four Variants</a></li>
+<li><a href="#a-site-pool-one-wordpress-per-worker">A Site Pool: One WordPress per Worker</a></li>
+<li><a href="#generating-the-compose-file">Generating the Compose File</a></li>
+<li><a href="#the-wp-cli-sidecar-and-the-uid-trap">The wp-cli Sidecar and the uid Trap</a></li>
+<li><a href="#old-sites-start-from-a-real-database">Old Sites Start from a Real Database</a></li>
+<li><a href="#getting-the-plugin-code-onto-the-sites">Getting the Plugin Code onto the Sites</a></li>
+<li><a href="#mu-plugins-test-helpers-in-the-rest-api">MU-Plugins: Test Helpers in the REST API</a></li>
+<li><a href="#the-pinned-playwright-box">The Pinned Playwright Box</a></li>
+<li><a href="#running-it">Running It</a></li>
+<li><a href="#traps-i-hit">Traps I Hit</a></li>
+<li><a href="#key-takeaways">Key Takeaways</a></li>
 </ol>
 <hr>
-<h2 id="the-problem-why-you-need-this">The Problem: Why You Need This</h2>
-<p>If you develop plugins, you know the testing challenge:</p>
-<ul>
-<li><strong>Lite vs Pro versions</strong> behave differently and load different code paths.</li>
-<li><strong>Fresh installs</strong> need to work flawlessly, but so do <strong>upgrades from older versions</strong> with existing data.</li>
-<li>Manual testing on a single local application site cannot cover these scenarios simultaneously.</li>
-<li>Your CI pipeline needs the exact same environment your local machine uses.</li>
-</ul>
-<p>I needed a solution that could:</p>
-<ul>
-<li>Run <strong>four application sites simultaneously</strong> (Lite New, Lite Old, Pro New, Pro Old).</li>
-<li>Each site gets its <strong>own database</strong>, its own <strong>port</strong>, and only the <strong>plugins it should have</strong>.</li>
-<li>Support <strong>database imports</strong> for “old” sites to simulate upgrades.</li>
-<li>Work identically on <strong>local machines and CI servers</strong>.</li>
-<li>Be manageable through <strong>simple CLI commands</strong>.</li>
-</ul>
+<h2 id="the-four-variants">The Four Variants</h2>
+<p>Each combination the plugin must support is a <strong>variant</strong>:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Variant</th><th>Edition</th><th>Site</th></tr></thead><tbody><tr><td><code>pro-new</code></td><td>paid</td><td>a fresh install</td></tr><tr><td><code>pro-old</code></td><td>paid</td><td>an existing site, seeded from a database dump</td></tr><tr><td><code>lite-new</code></td><td>free</td><td>a fresh install</td></tr><tr><td><code>lite-old</code></td><td>free</td><td>an existing site, seeded from a database dump</td></tr></tbody></table>
+<p>“New” sites catch bugs in the first-run experience. “Old” sites catch the harder ones: upgrades, migrations, and settings that a fresh install never has.</p>
+<p>You rarely need all four at once. One environment variable picks the active variants:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">SITES_TO_INIT</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">pro-old,lite-new</span></span></code></pre>
 <hr>
-<h2 id="architecture-overview">Architecture Overview</h2>
-<p>Here’s what the final architecture looks like:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>                    ┌─────────────────────────────────────────┐</span></span>
-<span class="line"><span>                    │            manage.js (Bun)               │</span></span>
-<span class="line"><span>                    │   CLI for init/start/stop/reset/clean    │</span></span>
-<span class="line"><span>                    └────────────────┬────────────────────────┘</span></span>
-<span class="line"><span>                                     │</span></span>
-<span class="line"><span>                    ┌────────────────▼────────────────────────┐</span></span>
-<span class="line"><span>                    │         docker-compose.yml               │</span></span>
-<span class="line"><span>                    │    + docker-compose.override.yml (local) │</span></span>
-<span class="line"><span>                    └────────────────┬────────────────────────┘</span></span>
-<span class="line"><span>                                     │</span></span>
-<span class="line"><span>        ┌────────────┬───────────────┼───────────────┬────────────┐</span></span>
-<span class="line"><span>        │            │               │               │            │</span></span>
-<span class="line"><span>   ┌────▼────┐  ┌────▼────┐   ┌─────▼────┐   ┌─────▼────┐  ┌────▼────┐</span></span>
-<span class="line"><span>   │Lite-New │  │Lite-Old │   │ Pro-New  │   │ Pro-Old  │  │phpMyAdmin│</span></span>
-<span class="line"><span>   │ :8083   │  │ :8082   │   │  :8081   │   │  :8080   │  │  :8084   │</span></span>
-<span class="line"><span>   │ WP+DB   │  │ WP+DB   │   │  WP+DB   │   │  WP+DB   │  │  (tool)  │</span></span>
-<span class="line"><span>   │ +WP-CLI │  │ +WP-CLI │   │  +WP-CLI │   │  +WP-CLI │  └──────────┘</span></span>
-<span class="line"><span>   └─────────┘  └─────────┘   └──────────┘   └──────────┘</span></span></code></pre>
-<p>Each site is a trio of containers:</p>
-<ol>
-<li><strong>MariaDB</strong> — the database.</li>
-<li><strong>application</strong> — the PHP/Apache web server.</li>
-<li><strong>WP-CLI</strong> — a utility container for running application CLI commands.</li>
-</ol>
-<hr>
-<h2 id="project-structure">Project Structure</h2>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>_e2e-tests/</span></span>
-<span class="line"><span>├── docker/</span></span>
-<span class="line"><span>│   ├── docker-compose.yml              # Main service definitions</span></span>
-<span class="line"><span>│   ├── docker-compose.override.yml     # Local dev volume mounts</span></span>
-<span class="line"><span>│   ├── manage.js                       # Bun-powered management CLI</span></span>
-<span class="line"><span>│   ├── conf/</span></span>
-<span class="line"><span>│   │   └── uploads.ini                 # PHP upload configuration</span></span>
-<span class="line"><span>│   ├── data/</span></span>
-<span class="line"><span>│   │   └── pro-old.sql                 # Database dump for "old" sites</span></span>
-<span class="line"><span>│   ├── mu-plugins/</span></span>
-<span class="line"><span>│   │   └── test-automation-helpers.php # REST API helpers for testing</span></span>
-<span class="line"><span>│   └── plugins/                        # Downloaded plugin builds</span></span>
-<span class="line"><span>│       ├── my-plugin/</span></span>
-<span class="line"><span>│       ├── my-plugin-pro/</span></span>
-<span class="line"><span>│       ├── plugin-module-a/</span></span>
-<span class="line"><span>│       ├── plugin-module-b/</span></span>
-<span class="line"><span>│       └── ... (more addons)</span></span>
-<span class="line"><span>├── tests/</span></span>
-<span class="line"><span>│   └── e2e/                            # Playwright test files</span></span>
-<span class="line"><span>├── playwright.config.js</span></span>
-<span class="line"><span>├── package.json</span></span>
-<span class="line"><span>├── .env                                # Environment configuration</span></span>
-<span class="line"><span>└── run-tests.js                        # Test runner wrapper</span></span></code></pre>
-<hr>
-<h2 id="docker-compose-defining-the-multi-site-stack">Docker Compose: Defining the Multi-Site Stack</h2>
-<p>The <code>docker-compose.yml</code> file is the backbone of the setup. Each site follows the same pattern: a MariaDB database, a application container, and a WP-CLI utility container. Here’s the key design decisions:</p>
-<h3 id="using-docker-compose-profiles">Using Docker Compose Profiles</h3>
-<p>Instead of starting all four sites every time, I use <strong>Docker Compose profiles</strong> to selectively start only what you need:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">services</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  db-lite-new</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    image</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">mariadb:latest</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    environment</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      MYSQL_DATABASE</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress_lite_new</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      MYSQL_USER</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      MYSQL_PASSWORD</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      MYSQL_ROOT_PASSWORD</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">somewordpress</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    volumes</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">db_data_lite_new:/var/lib/mysql</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    command</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">--default-authentication-plugin=mysql_native_password</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    cap_add</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">SYS_NICE</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    profiles</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">lite-new</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">all</span></span></code></pre>
-<p>The <code>profiles</code> field means this container only starts when you explicitly request the <code>lite-new</code> or <code>all</code> profile. This keeps resource usage low during development when you only need one or two sites.</p>
-<h3 id="application-container-configuration">application Container Configuration</h3>
-<p>Each application container maps to a unique host port and connects to its own database:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  wordpress-lite-new</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    image</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress:latest</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    ports</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"${LITE_NEW_PORT:-8083}:80"</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    environment</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      WORDPRESS_DB_HOST</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">db-lite-new</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      WORDPRESS_DB_USER</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      WORDPRESS_DB_PASSWORD</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      WORDPRESS_DB_NAME</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress_lite_new</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      PHP_MEMORY_LIMIT</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">512M</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      PHP_OPCACHE_VALIDATE_TIMESTAMPS</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">0</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    volumes</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress_data_lite_new:/var/www/html:cached</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">./data:/data/:cached</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">./conf/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    depends_on</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">db-lite-new</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    profiles</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">lite-new</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">all</span></span></code></pre>
-<p>Key points:</p>
-<ul>
-<li><strong>Dynamic ports</strong> via environment variables (<code>${LITE_NEW_PORT:-8083}</code>) with sensible defaults.</li>
-<li><strong>Shared <code>/data</code> volume</strong> lets you mount SQL dumps accessible from inside every container.</li>
-<li><strong>Custom <code>uploads.ini</code></strong> increases PHP upload limits for testing large file uploads:</li>
-</ul>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="ini"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">file_uploads</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> = On</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">upload_max_filesize</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> = 128M</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">post_max_size</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> = 128M</span></span></code></pre>
-<h3 id="wp-cli-sidecar-containers">WP-CLI Sidecar Containers</h3>
-<p>Each site also gets a WP-CLI container for automated application administration:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  wpcli-lite-new</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    image</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress:cli</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    entrypoint</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: [</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"wp"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"--allow-root"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    environment</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      WORDPRESS_DB_HOST</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">db-lite-new</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      WORDPRESS_DB_USER</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      WORDPRESS_DB_PASSWORD</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      WORDPRESS_DB_NAME</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress_lite_new</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    volumes</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress_data_lite_new:/var/www/html:cached</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">./data:/data/:cached</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    depends_on</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">wordpress-lite-new</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">db-lite-new</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    profiles</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">lite-new</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">all</span></span></code></pre>
-<p>This container shares the same application volume, so WP-CLI operates on the same filesystem as the running application site. The <code>entrypoint</code> is set to <code>wp --allow-root</code> so every <code>docker compose run</code> command becomes a WP-CLI command automatically.</p>
-<h3 id="phpmyadmin-for-database-inspection">phpMyAdmin for Database Inspection</h3>
-<p>A bonus service for debugging database issues:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  phpmyadmin</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    image</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">phpmyadmin/phpmyadmin:latest</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    ports</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"8084:80"</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    environment</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">      PMA_HOSTS</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">db-lite-new,db-lite-old,db-pro-new,db-pro-old</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    profiles</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">tools</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">all</span></span></code></pre>
-<p>It connects to all four databases through the <code>PMA_HOSTS</code> variable, so you can switch between them from a single phpMyAdmin interface.</p>
-<h3 id="named-volumes">Named Volumes</h3>
-<p>All data is persisted in Docker named volumes:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">volumes</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  wordpress_data_lite_new</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  db_data_lite_new</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  wordpress_data_lite_old</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  db_data_lite_old</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  wordpress_data_pro_new</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  db_data_pro_new</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  wordpress_data_pro_old</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  db_data_pro_old</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span></code></pre>
-<p>This means stopping and restarting containers preserves your application installations and databases. Use <code>bun run site:cleanup</code> to wipe everything and start fresh.</p>
-<hr>
-<h2 id="the-override-file-local-vs-ci-environments">The Override File: Local vs CI Environments</h2>
-<p>This is one of the most important design decisions. The <code>docker-compose.override.yml</code> file is <strong>automatically merged</strong> by Docker Compose when running locally, but <strong>explicitly excluded</strong> in CI.</p>
-<h3 id="what-the-override-file-does">What the Override File Does</h3>
-<p>For <strong>local development</strong>, it bind-mounts your actual plugin source code into the containers:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">services</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  # Lite sites: Mount only the free plugin</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  wordpress-lite-new</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    volumes</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">./plugins/my-plugin:/var/www/html/wp-content/plugins/my-plugin:delegated</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">./mu-plugins:/var/www/html/wp-content/mu-plugins:delegated</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  # Pro sites: Mount all pro plugins individually</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">  wordpress-pro-new</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">    volumes</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">./plugins/my-plugin:/var/www/html/wp-content/plugins/my-plugin:delegated</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">./plugins/my-plugin-pro:/var/www/html/wp-content/plugins/my-plugin-pro:delegated</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">./plugins/plugin-module-a:/var/www/html/wp-content/plugins/plugin-module-a:delegated</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">./plugins/plugin-module-b:/var/www/html/wp-content/plugins/plugin-module-b:delegated</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">      # ... more addon plugins</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">./mu-plugins:/var/www/html/wp-content/mu-plugins:delegated</span></span></code></pre>
-<h3 id="why-this-matters">Why This Matters</h3>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<table><thead><tr><th>Scenario</th><th>Plugin Delivery Method</th><th>Override File Used?</th></tr></thead><tbody><tr><td><strong>Local dev</strong></td><td>Bind mounts (instant changes)</td><td>Yes (auto-merged)</td></tr><tr><td><strong>CI/CD</strong></td><td><code>docker cp</code> into containers</td><td>No (explicitly excluded)</td></tr></tbody></table>
-<p>Benefits for local development:</p>
-<ul>
-<li><strong>Instant file changes</strong>: Edit a plugin file and the change is immediately reflected inside the container.</li>
-<li><strong>No sync step needed</strong>: No need to rebuild or restart containers after code changes.</li>
-<li><strong>Lite sites only get Lite plugins</strong>: The override file enforces the same plugin separation that exists in production.</li>
-</ul>
-<p>In CI, the <code>manage.js</code> script detects the CI environment and skips the override file:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> isCI</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> process.env.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">CI</span><span style="color:#D73A49;--shiki-dark:#F97583"> ===</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'true'</span><span style="color:#D73A49;--shiki-dark:#F97583"> ||</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> process.env.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">BUILDKITE</span><span style="color:#D73A49;--shiki-dark:#F97583"> ===</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'true'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (isCI) {</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  baseArgs.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">push</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'-f'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#6F42C1;--shiki-dark:#B392F0">join</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">SCRIPT_DIR</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'docker-compose.yml'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">));</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">} </span><span style="color:#D73A49;--shiki-dark:#F97583">else</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  baseArgs.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">push</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'-f'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#6F42C1;--shiki-dark:#B392F0">join</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">SCRIPT_DIR</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'docker-compose.yml'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">));</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> overridePath</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> join</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">SCRIPT_DIR</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'docker-compose.override.yml'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#6F42C1;--shiki-dark:#B392F0">existsSync</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(overridePath)) {</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    baseArgs.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">push</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'-f'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, overridePath);</span></span>
+<h2 id="a-site-pool-one-wordpress-per-worker">A Site Pool: One WordPress per Worker</h2>
+<p>Playwright runs tests in parallel workers. If two workers share one WordPress site, they share its database, its options and its cache. Worker A saves a setting, worker B reads it, and a test fails for a reason that has nothing to do with the code under test.</p>
+<p>So each active variant is expanded into <strong>one instance per worker</strong>. With two workers and two variants, the pool has four sites:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="json"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">  "workers"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">2</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">  "instances"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: {</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">    "pro-old-0"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:  { </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"variant"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"pro-old"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,  </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"baseURL"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"http://localhost:8200"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"db"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"wordpress_pro_old_0"</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> },</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">    "pro-old-1"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:  { </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"variant"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"pro-old"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,  </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"baseURL"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"http://localhost:8201"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"db"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"wordpress_pro_old_1"</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> },</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">    "lite-new-0"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: { </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"variant"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"lite-new"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"baseURL"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"http://localhost:8300"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"db"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"wordpress_lite_new_0"</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> },</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">    "lite-new-1"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: { </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"variant"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"lite-new"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"baseURL"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"http://localhost:8301"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">"db"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"wordpress_lite_new_1"</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> }</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  }</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span></code></pre>
+<p>Each instance is fully separate: its own WordPress container, its own MariaDB container, its own wp-cli container, its own volumes, and its own port. Each variant has a port range, and the instance number is added to it: <code>pro-old</code> starts at 8200, <code>pro-new</code> at 8250, <code>lite-new</code> at 8300 and <code>lite-old</code> at 8350.</p>
+<p>A test fixture reads this manifest and maps each variant to the worker’s own instance, <code>${variant}-${testInfo.parallelIndex}</code>. A test never needs to know which worker it runs on. It asks for “the <code>pro-old</code> site”, and it gets its own.</p>
+<p>Test data gets the same treatment. Every post, term or user a test creates carries a worker prefix, such as <code>w1-t3</code>, so two workers never create two things with the same name.</p>
 <hr>
-<h2 id="the-management-script-automating-everything">The Management Script: Automating Everything</h2>
-<p>The <code>manage.js</code> file is a Bun-powered CLI that orchestrates the entire lifecycle. Here’s what each command does:</p>
-<h3 id="available-commands">Available Commands</h3>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<table><thead><tr><th>Command</th><th>npm Script</th><th>Description</th></tr></thead><tbody><tr><td><code>init</code></td><td><code>bun run site:init</code></td><td>Download plugins, start containers, install application, import databases, activate plugins</td></tr><tr><td><code>start</code></td><td><code>bun run site:start</code></td><td>Start existing containers (no setup)</td></tr><tr><td><code>stop</code></td><td><code>bun run site:stop</code></td><td>Stop all running containers</td></tr><tr><td><code>reset</code></td><td><code>bun run site:reset</code></td><td>Clean everything and re-initialize</td></tr><tr><td><code>cleanup</code></td><td><code>bun run site:cleanup</code></td><td>Remove all containers, volumes, and data</td></tr><tr><td><code>logs</code></td><td><code>bun run site:logs</code></td><td>Tail container logs</td></tr><tr><td><code>download-plugins</code></td><td><code>bun run plugin:download</code></td><td>Download plugin builds from remote server</td></tr><tr><td><code>sync-plugins</code></td><td><code>bun run plugin:sync</code></td><td>Copy plugins to running containers</td></tr><tr><td><code>wp</code></td><td>—</td><td>Run WP-CLI commands on a specific site</td></tr><tr><td><code>export-db</code></td><td><code>bun run db:export</code></td><td>Export a site’s database to a SQL file</td></tr><tr><td><code>db ui</code></td><td><code>bun run db:phpmyadmin</code></td><td>Start phpMyAdmin</td></tr></tbody></table>
-<h3 id="the-init-flow">The Init Flow</h3>
-<p>The <code>init</code> command is the most complex. Here’s what happens step by step:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>1. Load .env configuration</span></span>
-<span class="line"><span>2. Check if plugins exist locally</span></span>
-<span class="line"><span>   ├── Yes → Continue</span></span>
-<span class="line"><span>   └── No → Download from remote build server (manifest.json)</span></span>
-<span class="line"><span>3. Determine which sites to start (from SITES_TO_INIT)</span></span>
-<span class="line"><span>4. Build Docker Compose profile arguments</span></span>
-<span class="line"><span>5. Start containers with `docker compose up -d`</span></span>
-<span class="line"><span>6. Wait 20 seconds for services to stabilize</span></span>
-<span class="line"><span>7. Verify container health</span></span>
-<span class="line"><span>8. Wait for databases to accept connections (retry loop)</span></span>
-<span class="line"><span>9. For each site:</span></span>
-<span class="line"><span>   ├── Copy plugins (CI) or use bind mounts (local)</span></span>
-<span class="line"><span>   ├── Copy mu-plugins</span></span>
-<span class="line"><span>   ├── Check if application is already installed</span></span>
-<span class="line"><span>   │   ├── Yes → Update URLs, activate plugins</span></span>
-<span class="line"><span>   │   └── No → Install application</span></span>
-<span class="line"><span>   │       ├── "New" site → Set permalink structure</span></span>
-<span class="line"><span>   │       └── "Old" site → Import SQL dump, update URLs</span></span>
-<span class="line"><span>   └── Activate required plugins</span></span>
-<span class="line"><span>10. Print summary with URLs and credentials</span></span></code></pre>
-<h3 id="plugin-download-system">Plugin Download System</h3>
-<p>Plugins are downloaded from a remote build server using a manifest:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">async</span><span style="color:#D73A49;--shiki-dark:#F97583"> function</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> downloadPluginsFromRemote</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#E36209;--shiki-dark:#FFAB70">branch</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'develop'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) {</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> baseUrl</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> `https://releases.example.com/.../releases/${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">branch</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // Fetch manifest listing all plugin ZIP URLs</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> manifest</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#D73A49;--shiki-dark:#F97583"> await</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> fetch</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">`${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">baseUrl</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}/manifest.json`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> pluginUrls</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> JSON</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">parse</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(manifest);</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // Download and extract each plugin</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> downloadUrl</span><span style="color:#D73A49;--shiki-dark:#F97583"> of</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> pluginUrls) {</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    await</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> $</span><span style="color:#032F62;--shiki-dark:#9ECBFF">`curl -f -L -o ${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">tempZipPath</span><span style="color:#032F62;--shiki-dark:#9ECBFF">} ${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">downloadUrl</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    await</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> $</span><span style="color:#032F62;--shiki-dark:#9ECBFF">`unzip -q -o ${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">tempZipPath</span><span style="color:#032F62;--shiki-dark:#9ECBFF">} -d ${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">pluginsPath</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  }</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span></code></pre>
-<p>This means you can test any branch’s plugin build by running:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> plugin:download</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> --</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> feature-branch</span></span></code></pre>
-<h3 id="site-configuration-logic">Site Configuration Logic</h3>
-<p>The script knows which plugins belong to which site type:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> SITE_PLUGINS</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">  'lite-new'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: [</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'my-plugin'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">],</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">  'lite-old'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: [</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'my-plugin'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">],</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">  'pro-new'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">REQUIRED_PLUGINS</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,  </span><span style="color:#6A737D;--shiki-dark:#6A737D">// All 10 plugins</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">  'pro-old'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">REQUIRED_PLUGINS</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">};</span></span></code></pre>
-<p>And which sites need database imports:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">function</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> getSiteConfigs</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() {</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    'lite-new'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: { port: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">8083</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, profile: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'lite-new'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, plugin: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'my-plugin'</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> },</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    'lite-old'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: { port: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">8082</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, profile: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'lite-old'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, plugin: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'my-plugin'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, importDb: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">true</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> },</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    'pro-new'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:  { port: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">8081</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, profile: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'pro-new'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,  plugin: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'my-plugin-pro'</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> },</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    'pro-old'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:  { port: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">8080</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, profile: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'pro-old'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,  plugin: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'my-plugin-pro'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, importDb: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">true</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> },</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  };</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span></code></pre>
-<p>Sites with <code>importDb: true</code> (the “old” sites) will have a pre-existing database imported after application installation, simulating a site that has been running with the plugin for a while.</p>
-<hr>
-<h2 id="mu-plugins-custom-rest-api-helpers-for-testing">MU-Plugins: Custom REST API Helpers for Testing</h2>
-<p>The <code>test-automation-helpers.php</code> mu-plugin exposes application internals via REST API endpoints that Playwright tests can query. This is a critical piece — it lets your tests <strong>read application state without going through the UI</strong>.</p>
-<h3 id="exposed-endpoints">Exposed Endpoints</h3>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<table><thead><tr><th>Endpoint</th><th>What It Returns</th></tr></thead><tbody><tr><td><code>GET /wp-json/</code> (modified)</td><td>application version in the <code>generator</code> field</td></tr><tr><td><code>GET /wp-json/wp/v2/posts</code> (modified)</td><td>Includes <code>comment_count</code> field on each post</td></tr><tr><td><code>GET /wp-json/e2e/v1/permalink-structure</code></td><td>Current permalink structure setting</td></tr><tr><td><code>GET /wp-json/e2e/v1/timezone</code></td><td>application timezone setting</td></tr><tr><td><code>GET /wp-json/e2e/v1/date-format</code></td><td>Date format string</td></tr><tr><td><code>GET /wp-json/e2e/v1/time-format</code></td><td>Time format string</td></tr><tr><td><code>GET /wp-json/e2e/v1/plugins</code></td><td>All installed plugins with status and version</td></tr><tr><td><code>GET /wp-json/e2e/v1/post-types</code></td><td>All public post types</td></tr><tr><td><code>GET /wp-json/e2e/v1/taxonomies</code></td><td>All public taxonomies</td></tr><tr><td><code>GET /wp-json/e2e/v1/reading-settings</code></td><td>All reading settings (homepage display, posts per page, etc.)</td></tr><tr><td><code>GET /wp-json/e2e/v1/homepage-last-modified</code></td><td>ISO 8601 date of most recent content modification</td></tr></tbody></table>
-<h3 id="example-plugin-status-endpoint">Example: Plugin Status Endpoint</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="php"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">register_rest_route</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'e2e/v1'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'/plugins'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, [</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    'methods'</span><span style="color:#D73A49;--shiki-dark:#F97583">  =></span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'GET'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    'callback'</span><span style="color:#D73A49;--shiki-dark:#F97583"> =></span><span style="color:#D73A49;--shiki-dark:#F97583"> function</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> () {</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        $plugins </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> get_plugins</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        $plugin_map </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [];</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        foreach</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ($plugins </span><span style="color:#D73A49;--shiki-dark:#F97583">as</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> $file </span><span style="color:#D73A49;--shiki-dark:#F97583">=></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> $data) {</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">            $slug </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> sanitize_title</span><span style="color:#24292E;--shiki-dark:#E1E4E8">($data[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'Name'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]);</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">            $plugin_map[$slug] </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">                'file'</span><span style="color:#D73A49;--shiki-dark:#F97583">    =></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> $file,</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">                'status'</span><span style="color:#D73A49;--shiki-dark:#F97583">  =></span><span style="color:#6F42C1;--shiki-dark:#B392F0"> is_plugin_active</span><span style="color:#24292E;--shiki-dark:#E1E4E8">($file) </span><span style="color:#D73A49;--shiki-dark:#F97583">?</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'active'</span><span style="color:#D73A49;--shiki-dark:#F97583"> :</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'inactive'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">                'version'</span><span style="color:#D73A49;--shiki-dark:#F97583"> =></span><span style="color:#24292E;--shiki-dark:#E1E4E8"> $data[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'Version'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">] </span><span style="color:#D73A49;--shiki-dark:#F97583">??</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'unknown'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">            ];</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        }</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> $plugin_map;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    },</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    'permission_callback'</span><span style="color:#D73A49;--shiki-dark:#F97583"> =></span><span style="color:#032F62;--shiki-dark:#9ECBFF"> '__return_true'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">]);</span></span></code></pre>
-<p>In a Playwright test, you can now verify plugin state programmatically:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> response</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#D73A49;--shiki-dark:#F97583"> await</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> request.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">get</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'http://localhost:8080/wp-json/e2e/v1/plugins'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> plugins</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#D73A49;--shiki-dark:#F97583"> await</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> response.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">json</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">expect</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(plugins[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'my-plugin-pro'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">].status).</span><span style="color:#6F42C1;--shiki-dark:#B392F0">toBe</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'active'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span></code></pre>
-<p>This is a mu-plugin (must-use plugin), meaning application loads it automatically without activation. It gets mounted into every container via the override file or copied via <code>docker cp</code> in CI.</p>
-<hr>
-<h2 id="environment-configuration">Environment Configuration</h2>
-<p>The <code>.env</code> file drives the entire setup:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># application version</span></span>
-<span class="line"><span>WP_VERSION=latest</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Default credentials</span></span>
-<span class="line"><span>USERNAME=admin</span></span>
-<span class="line"><span>PASSWORD=1234</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Which sites to initialize (comma-separated)</span></span>
-<span class="line"><span>SITES_TO_INIT=pro-old,lite-new</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Site URLs (ports are extracted automatically)</span></span>
-<span class="line"><span>PRO_OLD_BASE_URL=http://localhost:8080</span></span>
-<span class="line"><span>PRO_NEW_BASE_URL=http://localhost:8081</span></span>
-<span class="line"><span>LITE_OLD_BASE_URL=http://localhost:8082</span></span>
-<span class="line"><span>LITE_NEW_BASE_URL=http://localhost:8083</span></span></code></pre>
-<h3 id="how-ports-are-derived">How Ports Are Derived</h3>
-<p>Instead of duplicating port configuration, the <code>manage.js</code> script extracts ports from the URLs automatically:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">function</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> extractPortFromUrl</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#E36209;--shiki-dark:#FFAB70">url</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) {</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> match</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> url.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">match</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">/</span><span style="color:#032F62;--shiki-dark:#DBEDFF">:(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">\d</span><span style="color:#D73A49;--shiki-dark:#F97583">+</span><span style="color:#032F62;--shiki-dark:#DBEDFF">)</span><span style="color:#032F62;--shiki-dark:#9ECBFF">/</span><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> match </span><span style="color:#D73A49;--shiki-dark:#F97583">?</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> parseInt</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(match[</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">], </span><span style="color:#005CC5;--shiki-dark:#79B8FF">10</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">:</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 80</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">function</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> exportPortsFromBaseUrls</span><span style="color:#24292E;--shiki-dark:#E1E4E8">() {</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (process.env.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">PRO_OLD_BASE_URL</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) {</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    process.env.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">PRO_OLD_PORT</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> extractPortFromUrl</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(process.env.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">PRO_OLD_BASE_URL</span><span style="color:#24292E;--shiki-dark:#E1E4E8">).</span><span style="color:#6F42C1;--shiki-dark:#B392F0">toString</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  }</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // ... same for other sites</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span></code></pre>
-<p>Docker Compose then uses these as variables:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#22863A;--shiki-dark:#85E89D">ports</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  - </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"${PRO_OLD_PORT:-8080}:80"</span></span></code></pre>
-<p>One source of truth. Change the URL, and the port follows.</p>
-<hr>
-<h2 id="integrating-with-playwright-for-e2e-tests">Integrating with Playwright for E2E Tests</h2>
-<p>The Playwright configuration reads the same <code>.env</code> file and targets the Docker-hosted application sites:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">// playwright.config.js</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> dotenv </span><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'dotenv'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">dotenv.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">config</span><span style="color:#24292E;--shiki-dark:#E1E4E8">();</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">export</span><span style="color:#D73A49;--shiki-dark:#F97583"> default</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> defineConfig</span><span style="color:#24292E;--shiki-dark:#E1E4E8">({</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  testDir: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'./tests/e2e/'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  timeout: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">80000</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  use: {</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    headless: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">true</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    trace: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'retain-on-failure'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    actionTimeout: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">10000</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    launchOptions: {</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      slowMo: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">50</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<h2 id="generating-the-compose-file">Generating the Compose File</h2>
+<p>A hand-written <code>docker-compose.yml</code> cannot grow with the worker count. So the compose file is <strong>generated</strong>. One small, pure function builds it from the active variants and the worker count:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="js"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">export</span><span style="color:#D73A49;--shiki-dark:#F97583"> function</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> buildPool</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#E36209;--shiki-dark:#FFAB70">activeVariants</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#E36209;--shiki-dark:#FFAB70">workers</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> services</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {}, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">volumes</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {}, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">instances</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {}</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> variant</span><span style="color:#D73A49;--shiki-dark:#F97583"> of</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> activeVariants) {</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#D73A49;--shiki-dark:#F97583">let</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> i </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">; i </span><span style="color:#D73A49;--shiki-dark:#F97583">&#x3C;</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> workers; i</span><span style="color:#D73A49;--shiki-dark:#F97583">++</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      Object.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">assign</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(services, </span><span style="color:#6F42C1;--shiki-dark:#B392F0">instanceServices</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(variant, i))</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">      const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> u</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> variant.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">replace</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">/</span><span style="color:#032F62;--shiki-dark:#DBEDFF">-</span><span style="color:#032F62;--shiki-dark:#9ECBFF">/</span><span style="color:#D73A49;--shiki-dark:#F97583">g</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'_'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      volumes[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">`wp_${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">u</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}_${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">i</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">] </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> null</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      volumes[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">`db_${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">u</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}_${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">i</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">] </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> null</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">      const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> port</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> BASE_PORTS</span><span style="color:#24292E;--shiki-dark:#E1E4E8">[variant] </span><span style="color:#D73A49;--shiki-dark:#F97583">+</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> i</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      instances[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">`${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">variant</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}-${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">i</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">] </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> { variant, baseURL: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">`http://localhost:${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">port</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, port, db: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">`wordpress_${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">u</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}_${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">i</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}`</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> }</span></span>
 <span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    }</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  },</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  projects: [</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    {</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      name: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'license-activation'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      testMatch: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'**/general-settings.spec.js'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      grep:</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> /</span><span style="color:#032F62;--shiki-dark:#DBEDFF">Activate license key</span><span style="color:#032F62;--shiki-dark:#9ECBFF">/</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      use: { </span><span style="color:#D73A49;--shiki-dark:#F97583">...</span><span style="color:#24292E;--shiki-dark:#E1E4E8">devices[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'Desktop Chrome'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">], viewport: { width: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">1440</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, height: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">798</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> } },</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    },</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    {</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      name: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'visual-regression'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      testMatch: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'**/visual-regression.spec.js'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      use: { </span><span style="color:#D73A49;--shiki-dark:#F97583">...</span><span style="color:#24292E;--shiki-dark:#E1E4E8">devices[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'Desktop Chrome'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">], viewport: { width: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">1920</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, height: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">940</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> } },</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    },</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    // ... more test projects</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  ],</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">});</span></span></code></pre>
-<h3 id="running-tests">Running Tests</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Setup Playwright browsers (first time only)</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> test:setup</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Run all tests</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> test</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Run specific test file</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> test:file</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> tests/e2e/sitemap.spec.js</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Run tests by tag</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> test:tag</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> @smoke</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Run with visible browser (debug mode)</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> test:debug</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># View the HTML report</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> test:report</span></span></code></pre>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    compose: { name: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'plugin-testing'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, services, volumes },</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    manifest: { workers, instances },</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span></code></pre>
+<p>Two details make this pleasant:</p>
+<ul>
+<li><strong>Compose accepts JSON.</strong> A <code>-f</code> file can be plain JSON, so the generator writes <code>docker-compose.pool.yml</code> with <code>JSON.stringify</code> and needs no YAML library.</li>
+<li><strong>The function is pure.</strong> It builds objects and writes nothing, so a unit test can check the ports, the names and the volumes without starting Docker.</li>
+</ul>
+<p>The same run writes the manifest, <code>.site-pool.json</code>, so the compose file and the test fixtures can never disagree about which sites exist.</p>
 <hr>
-<h2 id="running-the-setup-step-by-step">Running the Setup Step by Step</h2>
-<h3 id="prerequisites">Prerequisites</h3>
-<ol>
-<li><strong>Docker Desktop</strong> installed and running.</li>
-<li><strong>Bun</strong> runtime installed (<code>curl -fsSL https://bun.sh/install | bash</code>).</li>
-<li><strong>Node.js</strong> (for Playwright).</li>
-</ol>
-<h3 id="first-time-setup">First-Time Setup</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Clone the repository and navigate to the test directory</span></span>
-<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">cd</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> _e2e-tests</span></span>
+<h2 id="the-wp-cli-sidecar-and-the-uid-trap">The wp-cli Sidecar and the uid Trap</h2>
+<p>Every instance has a wp-cli container next to its WordPress container. The tests use it to install plugins, change options and create content:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="js"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">`wpcli-${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">variant</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}-${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">i</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]: {</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  image: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'wordpress:cli'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  entrypoint: [</span><span style="color:#032F62;--shiki-dark:#9ECBFF">'wp'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'--allow-root'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  user: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'33:33'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  volumes: [</span><span style="color:#032F62;--shiki-dark:#9ECBFF">`wp_${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">u</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}_${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">i</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}:/var/www/html:cached`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  depends_on: [</span><span style="color:#032F62;--shiki-dark:#9ECBFF">`wordpress-${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">variant</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}-${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">i</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">`db-${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">variant</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}-${</span><span style="color:#24292E;--shiki-dark:#E1E4E8">i</span><span style="color:#032F62;--shiki-dark:#9ECBFF">}`</span><span style="color:#24292E;--shiki-dark:#E1E4E8">],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span></code></pre>
+<p>The <code>user: '33:33'</code> line took me a long time to find. The <code>wordpress:latest</code> image runs PHP as <code>www-data</code> with <strong>uid 33</strong>. The <code>wordpress:cli</code> image is based on Alpine, where <code>www-data</code> is <strong>uid 82</strong>. Without the override, wp-cli writes into a web root that it does not own, and the write <strong>fails silently</strong>. A plugin install “succeeds”, and the plugin is not there. Setting the user to 33 makes both containers the same owner.</p>
+<hr>
+<h2 id="old-sites-start-from-a-real-database">Old Sites Start from a Real Database</h2>
+<p>An “old” site is only useful if it looks like a real, long-lived site. So the <code>-old</code> variants start from a database dump of a site that has run older versions of the plugin, with real settings, content and history.</p>
+<p>Two rules keep this safe:</p>
+<ul>
+<li><strong>Scrub the dump.</strong> A dump of a real site holds personal data: emails, names, IP addresses. Mine is scrubbed before it goes into the repo, and it has no personal data left.</li>
+<li><strong>Import it into every instance.</strong> Each <code>pro-old-N</code> gets its own copy of the same dump, so every worker starts from the same state.</li>
+</ul>
+<hr>
+<h2 id="getting-the-plugin-code-onto-the-sites">Getting the Plugin Code onto the Sites</h2>
+<p>There are two ways to put the code under test onto the sites, and each suits one place:</p>
+<ul>
+<li><strong>In CI, copy the plugins in.</strong> The pipeline downloads the plugin builds for a branch and copies them into each site. Every run starts clean. The setup script sees the CI environment and turns the mounts off by itself.</li>
+<li><strong>On a laptop, mount the source.</strong> A bind mount puts your working copy straight into each site, so an edit shows up on the next page load with no copy step.</li>
+</ul>
+<p>Bind mounts have one catch. Tests that upload or update a plugin through the WordPress admin need to <strong>write</strong> to the plugins folder, and a bind mount to your source tree is the wrong place for that. So one switch turns the mounts off:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">PLUGIN_MOUNTS</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">false</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:init</span></span></code></pre>
+<hr>
+<h2 id="mu-plugins-test-helpers-in-the-rest-api">MU-Plugins: Test Helpers in the REST API</h2>
+<p>A must-use plugin in every site adds small helpers to the REST API, so a test can check the state of the site directly instead of guessing from the page:</p>
+<ul>
+<li>the WordPress version, in the REST API root</li>
+<li>the comment count, on each post</li>
+<li>the permalink structure</li>
+</ul>
+<p>Must-use plugins load before every other plugin and cannot be turned off from the admin, so a test can always rely on them.</p>
+<hr>
+<h2 id="the-pinned-playwright-box">The Pinned Playwright Box</h2>
+<p>Visual regression tests compare a screenshot with a saved “baseline” image. They are only useful if the same page gives the same pixels every time. It does not, across machines:</p>
+<ul>
+<li>a different <strong>Chromium</strong> version draws text differently</li>
+<li>different <strong>fonts</strong> change line widths</li>
+<li>a different <strong>CPU architecture</strong> changes the result too: an Apple Silicon Mac runs the arm64 build of Chromium, and a CI agent runs x64. It is the same version, but text and SVG transforms are drawn a little differently, and that is enough to fail a byte comparison.</li>
+</ul>
+<p>So every visual test runs inside <strong>one pinned Docker image</strong>, on a laptop and in CI:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="dockerfile"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># The tag MUST match @playwright/test in the lockfile. Bump both together.</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">FROM</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> mcr.microsoft.com/playwright:v1.63.0-jammy</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. Install dependencies</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> install</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># bun must match the version that made bun.lock, or --frozen-lockfile rejects it.</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">ARG</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> BUN_VERSION=1.2.4</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">RUN</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> npm install -g bun@${BUN_VERSION}</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Create your .env file</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">cp</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> .env.example</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> .env</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Edit .env with your configuration</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># The suite runs `docker compose` for site setup, so the box needs the Docker CLI.</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">RUN</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> apt-get update &#x26;&#x26; apt-get install -y --no-install-recommends docker-ce-cli docker-compose-plugin</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 4. Initialize the Docker environment</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># This downloads plugins, starts containers, installs application,</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># imports databases, and activates plugins</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:init</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Baselines may only be updated inside this image.</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">ENV</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> VR_PINNED_ENV=1</span></span></code></pre>
+<p>A small script, <code>run-in-box.sh</code>, runs any command in it:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">docker/run-in-box.sh</span><span style="color:#6A737D;--shiki-dark:#6A737D">                          # compare screenshots</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">docker/run-in-box.sh</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'bun x playwright test'</span><span style="color:#6A737D;--shiki-dark:#6A737D">  # the whole suite</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">docker/run-in-box.sh</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'bun run vr:update'</span><span style="color:#6A737D;--shiki-dark:#6A737D">      # update the baselines</span></span></code></pre>
+<p>The details inside that script are where the work was:</p>
+<ul>
+<li><strong>Docker outside of Docker.</strong> The tests start and change the WordPress sites with <code>docker compose</code>. The box mounts the host’s Docker socket, so those commands reach the host’s Docker, not a new one inside the container.</li>
+<li><strong>Mount the repo at its real host path.</strong> The compose file uses relative bind mounts. They only resolve the same way if the repo sits at the same path inside the box as on the host.</li>
+<li><strong>Keep <code>node_modules</code> in a Linux volume.</strong> A Mac’s <code>node_modules</code> holds macOS binaries, and they must not leak into a Linux container.</li>
+<li><strong>Use the host network.</strong> The WordPress sites have <code>http://localhost:&#x3C;port></code> saved as their home URL, so the box must reach them through the same <code>localhost</code>.</li>
+<li><strong>Force one architecture when it matters.</strong> <code>PW_BOX_PLATFORM=linux/amd64</code> makes an Apple Silicon Mac run the same x64 build as CI.</li>
+<li><strong>Guard the baselines.</strong> Updating baselines checks <code>VR_PINNED_ENV</code> first, and it refuses to run outside the box. A baseline from the wrong machine would make every later comparison wrong.</li>
+</ul>
+<hr>
+<h2 id="running-it">Running It</h2>
+<p>The day-to-day commands are short:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Build the pool and set up every site</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">PW_WORKERS</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">2</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> SITES_TO_INIT</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">pro-old,lite-new</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:init</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 5. Install Playwright browsers</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> test:setup</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 6. Run your tests</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> test</span></span></code></pre>
-<h3 id="daily-workflow">Daily Workflow</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Start your sites (if stopped)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Start, stop, or reset the sites</span></span>
 <span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:start</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Run tests</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> test</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Check container status</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:status</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Stop when done</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:stop</span></span></code></pre>
-<h3 id="when-things-go-wrong">When Things Go Wrong</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Full reset (wipes everything and re-initializes)</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:stop</span></span>
 <span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:reset</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Just clean up (remove all containers and volumes)</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:cleanup</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Run wp-cli against one site</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> wp:plugin-list</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Check container logs</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:logs</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Open phpMyAdmin to inspect databases</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> db:phpmyadmin</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Visit http://localhost:8084 (root / somewordpress)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Run WP-CLI commands directly</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">docker/manage.js</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> wp</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> pro-old</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> plugin</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> list</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">docker/manage.js</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> wp</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> lite-new</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> option</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> get</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> siteurl</span></span></code></pre>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Run the tests</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> test</span><span style="color:#6A737D;--shiki-dark:#6A737D">                 # on the host</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> test:docker</span><span style="color:#6A737D;--shiki-dark:#6A737D">          # inside the pinned box</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> vr:page</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'settings'</span><span style="color:#6A737D;--shiki-dark:#6A737D">   # one visual test, inside the box</span></span></code></pre>
+<p><code>site:init</code> does the whole setup for each instance: it waits for the database, installs WordPress (or imports the dump for an <code>-old</code> site), copies or mounts the plugins, adds the must-use helpers, and activates what the variant needs.</p>
 <hr>
-<h2 id="cicd-integration-with-buildkite">CI/CD Integration with Buildkite</h2>
-<p>The setup works seamlessly in CI. The key differences:</p>
-<ol>
-<li><strong>No override file</strong> — plugins are copied via <code>docker cp</code> instead of bind mounts.</li>
-<li><strong>TTY disabled</strong> — the <code>-T</code> flag is added to <code>docker compose run</code> to prevent hanging.</li>
-<li><strong>Plugin download is mandatory</strong> — fails hard if plugins can’t be downloaded.</li>
-<li><strong>Test results</strong> are reported to Buildkite’s test analytics.</li>
-</ol>
-<p>The management script auto-detects CI:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> isCI</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> process.env.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">CI</span><span style="color:#D73A49;--shiki-dark:#F97583"> ===</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'true'</span><span style="color:#D73A49;--shiki-dark:#F97583"> ||</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> process.env.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">BUILDKITE</span><span style="color:#D73A49;--shiki-dark:#F97583"> ===</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> 'true'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;</span></span></code></pre>
-<p>This single check controls:</p>
-<ul>
-<li>Whether the override file is used.</li>
-<li>Whether <code>-T</code> is passed to WP-CLI commands.</li>
-<li>Whether plugin download failures are fatal.</li>
-<li>Whether test results are streamed to Buildkite.</li>
-</ul>
-<hr>
-<h2 id="troubleshooting-common-issues">Troubleshooting Common Issues</h2>
-<h3 id="permission-issues-with-bind-mounts">Permission Issues with Bind Mounts</h3>
-<p>Docker may create root-owned files on your host. Fix with:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:cleanup</span></span></code></pre>
-<h3 id="port-conflicts">Port Conflicts</h3>
-<p>If another service uses port 8080-8084, change the URLs in <code>.env</code>:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>PRO_OLD_BASE_URL=http://localhost:9080</span></span></code></pre>
-<p>The port is auto-extracted and passed to Docker Compose.</p>
-<h3 id="database-not-ready">Database Not Ready</h3>
-<p>The init script retries database connections up to 30 times with a 2-second delay. If it still fails, check:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:logs</span></span></code></pre>
-<h3 id="stale-containers">Stale Containers</h3>
-<p>If you see weird behavior after pulling new code:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> site:reset</span></span></code></pre>
-<p>This does a full cleanup and re-initialization.</p>
-<h3 id="plugin-download-failures">Plugin Download Failures</h3>
-<p>If the remote build server is unreachable:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Try a specific branch</span></span>
-<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">bun</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> run</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> plugin:download</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> --</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> develop</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Or manually place plugin ZIPs in docker/plugins/</span></span></code></pre>
+<h2 id="traps-i-hit">Traps I Hit</h2>
+<p><strong>A plugin install “succeeds” and the plugin is missing.</strong> The wp-cli container writes as uid 82 into a web root owned by uid 33. Set <code>user: '33:33'</code> on the wp-cli service.</p>
+<p><strong>Screenshots differ between a Mac and CI, with the same versions.</strong> The CPU architecture is different. Run both on one platform with <code>PW_BOX_PLATFORM</code>.</p>
+<p><strong>Ctrl+C does not stop the run in the box.</strong> <code>docker run</code> leaves the container, and Playwright, running after the client stops. The script traps the exit and force-removes the container.</p>
+<p><strong>A later run is slow, and sites act strangely.</strong> A hard-killed box can leave an orphan container that keeps using the test sites. The script removes any old runner containers before it starts a new one.</p>
+<p><strong>CI cannot clean up its checkout.</strong> The box runs as root, so files it writes into the mounted repo belong to root. On exit, the script gives them back to the host user.</p>
+<p><strong>Upload tests fail on a laptop only.</strong> The plugin folder is a bind mount to the source tree. Run those tests with <code>PLUGIN_MOUNTS=false</code>.</p>
 <hr>
 <h2 id="key-takeaways">Key Takeaways</h2>
 <ol>
-<li><strong>Docker Compose profiles</strong> let you run only the sites you need, saving resources.</li>
-<li><strong>Override files</strong> cleanly separate local development (bind mounts) from CI (docker cp).</li>
-<li><strong>A management script</strong> (in Bun/Node) abstracts Docker commands into simple workflows.</li>
-<li><strong>MU-plugins</strong> expose application internals via REST APIs, making programmatic assertions easy.</li>
-<li><strong>Environment-driven configuration</strong> means one <code>.env</code> file controls everything.</li>
-<li><strong>“Old” sites with imported databases</strong> let you test upgrade paths alongside fresh installs.</li>
+<li><strong>One site per worker.</strong> Parallel tests only stay independent when they do not share a database.</li>
+<li><strong>Generate the compose file</strong> from the worker count, with a pure function you can unit-test.</li>
+<li><strong>Seed “old” sites from a scrubbed real database</strong>, so upgrade bugs show up before users see them.</li>
+<li><strong>Mount the source on a laptop, copy it in CI</strong>, with a switch for the tests that must write.</li>
+<li><strong>Take every screenshot in one pinned image</strong>, down to the Playwright version, the fonts and the CPU architecture.</li>
+<li><strong>Guard the baselines</strong>, so they can only be updated where they will be compared.</li>
 </ol>
-<p>This setup has cut our manual testing time significantly and given us confidence that both Lite and Pro versions work correctly across fresh installs and upgrades. The same environment runs locally and in CI, eliminating “works on my machine” issues entirely.</p>
-<p>If you’re building a plugin with multiple versions or configurations, I hope this gives you a solid foundation to build your own automated testing pipeline.</p>  </div> <p><small><span class="post-date"><time datetime="2026-03-26">Mar 26, 2026</time></span></small></p> <!-- Categories --> <div class="after-post-cats"> <ul class="tags mb-4"> <li><a href="/categories#Automation">Automation</a></li><li><a href="/categories#DevOps">DevOps</a></li><li><a href="/categories#Docker">Docker</a></li> </ul> </div> <!-- Tags --> <div class="after-post-tags"> <ul class="tags"> <li><a href="/tags#ci-cd">#ci-cd</a></li><li><a href="/tags#docker">#docker</a></li><li><a href="/tags#docker-compose">#docker-compose</a></li><li><a href="/tags#playwright">#playwright</a></li><li><a href="/tags#testing">#testing</a></li> </ul> </div> <!-- Buy me a coffee --> <div class="post-support" style="margin-top:2rem;padding:1.5rem 0;border-top:1px solid rgba(0,0,0,0.1);font-size:0.95rem;color:#555;">
+<p>The result: tests run in parallel without stepping on each other, and a screenshot that passes on my laptop passes in CI too.</p>  </div> <p><small><span class="post-date"><time datetime="2026-03-26">Mar 26, 2026</time></span></small></p> <!-- Categories --> <div class="after-post-cats"> <ul class="tags mb-4"> <li><a href="/categories#Automation">Automation</a></li><li><a href="/categories#DevOps">DevOps</a></li><li><a href="/categories#Docker">Docker</a></li> </ul> </div> <!-- Tags --> <div class="after-post-tags"> <ul class="tags"> <li><a href="/tags#ci-cd">#ci-cd</a></li><li><a href="/tags#docker">#docker</a></li><li><a href="/tags#docker-compose">#docker-compose</a></li><li><a href="/tags#playwright">#playwright</a></li><li><a href="/tags#testing">#testing</a></li><li><a href="/tags#visual-regression">#visual-regression</a></li> </ul> </div> <!-- Buy me a coffee --> <div class="post-support" style="margin-top:2rem;padding:1.5rem 0;border-top:1px solid rgba(0,0,0,0.1);font-size:0.95rem;color:#555;">
 If you found this post helpful, consider <a href="https://buymeacoffee.com/islammdshariful" target="_blank" style="color:#A69990;font-weight:600;">buying me a coffee</a>. It keeps me writing!
-</div> <!-- Prev/Next --> <div class="row PageNavigation d-flex justify-content-between font-weight-bold">  <a class="next d-block col-md-6 text-lg-right" href="/blog-build-personal-blog-astro-github-pages/">How to Build a Personal Blog Site with Astro and Deploy to GitHub Pages &raquo;</a> <div class="clearfix"></div> </div> </div> </div> </div>  </div> </div> </div> <!-- Dot Grid --> <script src="/scripts/dotgrid.js"></script> <nav class="dock" aria-label="Site" data-astro-cid-xuahrkkb> <button class="dock-btn dock-search" type="button" data-search-open aria-label="Search posts" aria-keyshortcuts="/" data-astro-cid-xuahrkkb> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" data-astro-cid-xuahrkkb><circle cx="10.5" cy="10.5" r="6.5" data-astro-cid-xuahrkkb></circle><line x1="15.5" y1="15.5" x2="20.5" y2="20.5" data-astro-cid-xuahrkkb></line></svg> <span class="dock-tip" data-astro-cid-xuahrkkb>sniff out a post <kbd data-astro-cid-xuahrkkb>/</kbd></span> </button> <a class="dock-home" href="/" aria-label="Home" data-astro-cid-xuahrkkb> <svg class="dock-bug" viewBox="0 0 64 56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="bug-ant" stroke-width="2.5"><line x1="24" y1="10" x2="19" y2="2"/><line x1="40" y1="10" x2="45" y2="2"/></g><path class="bug-head" d="M22 14 Q22 8 32 8 Q42 8 42 14 Z" fill="currentColor" stroke-width="0"/><circle cx="27" cy="12" r="1.3" fill="var(--bug-eye, #fff)" stroke="none"/><circle cx="37" cy="12" r="1.3" fill="var(--bug-eye, #fff)" stroke="none"/><path class="bug-shell" d="M18 16 Q18 14 22 14 L42 14 Q46 14 46 16 L46 38 Q46 48 32 48 Q18 48 18 38 Z" fill="var(--bug-shell, transparent)" stroke-width="2.5"/><g class="bug-legs bug-legs-a" stroke-width="2.5"><line x1="18" y1="22" x2="10" y2="18"/><line x1="18" y1="30" x2="10" y2="30"/><line x1="18" y1="38" x2="10" y2="42"/><line x1="46" y1="22" x2="54" y2="18"/><line x1="46" y1="30" x2="54" y2="30"/><line x1="46" y1="38" x2="54" y2="42"/></g><g class="bug-legs bug-legs-b" stroke-width="2.5"><line x1="18" y1="22" x2="8" y2="24"/><line x1="18" y1="30" x2="8" y2="27"/><line x1="18" y1="38" x2="8" y2="38"/><line x1="46" y1="22" x2="56" y2="24"/><line x1="46" y1="30" x2="56" y2="27"/><line x1="46" y1="38" x2="56" y2="38"/></g><g stroke-width="1.8"><circle cx="26" cy="26" r="3"/><line x1="26" y1="29" x2="26" y2="36"/><circle cx="26" cy="38" r="2.5"/><circle cx="38" cy="22" r="3"/><path d="M38 25 L38 30 Q38 34 34 36"/><circle cx="38" cy="34" r="2.5"/><line x1="29" y1="26" x2="35" y2="22"/></g></svg> <span class="dock-tip" data-astro-cid-xuahrkkb>home</span> </a> <button class="dock-btn dock-theme" type="button" data-theme-toggle aria-label="Switch to night" data-astro-cid-xuahrkkb> <span class="sky" aria-hidden="true" data-astro-cid-xuahrkkb> <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" data-astro-cid-xuahrkkb><circle cx="12" cy="12" r="4.5" data-astro-cid-xuahrkkb></circle><g data-astro-cid-xuahrkkb><line x1="12" y1="1.5" x2="12" y2="4" data-astro-cid-xuahrkkb></line><line x1="12" y1="20" x2="12" y2="22.5" data-astro-cid-xuahrkkb></line><line x1="1.5" y1="12" x2="4" y2="12" data-astro-cid-xuahrkkb></line><line x1="20" y1="12" x2="22.5" y2="12" data-astro-cid-xuahrkkb></line><line x1="4.6" y1="4.6" x2="6.4" y2="6.4" data-astro-cid-xuahrkkb></line><line x1="17.6" y1="17.6" x2="19.4" y2="19.4" data-astro-cid-xuahrkkb></line><line x1="4.6" y1="19.4" x2="6.4" y2="17.6" data-astro-cid-xuahrkkb></line><line x1="17.6" y1="6.4" x2="19.4" y2="4.6" data-astro-cid-xuahrkkb></line></g></svg> <svg class="moon" viewBox="0 0 24 24" fill="currentColor" data-astro-cid-xuahrkkb><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 6.8 6.8 0 0 0 20 14.5Z" data-astro-cid-xuahrkkb></path></svg> <span class="firefly" data-astro-cid-xuahrkkb></span> </span> <span class="dock-tip" data-theme-tip data-astro-cid-xuahrkkb>night</span> </button> <div class="sprout" data-sprout data-astro-cid-xuahrkkb> <button class="sprout-btn" type="button" aria-expanded="false" aria-controls="sprout-links" aria-label="Find me elsewhere" data-sprout-btn data-astro-cid-xuahrkkb> <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-astro-cid-xuahrkkb> <path class="sprout-stem" d="M4 14 C9 14 11 12 13 9" stroke="#5c9a47" stroke-width="2" data-astro-cid-xuahrkkb></path> <path class="sprout-leaf-a" d="M13 9 C13 5 16 3 20 3 C20 7 17 9 13 9 Z" fill="#5c9a47" data-astro-cid-xuahrkkb></path> <path class="sprout-leaf-b" d="M10 12 C8 9 8 6 10 4 C12 6 12 9 10 12 Z" fill="#7bb562" data-astro-cid-xuahrkkb></path> </svg> <span class="dock-tip" data-astro-cid-xuahrkkb>find me</span> </button> <div class="sprout-links" id="sprout-links" data-astro-cid-xuahrkkb> <a class="leaflet" href="https://github.com/islammdshariful" target="_blank" rel="noopener" aria-label="GitHub" data-astro-cid-xuahrkkb> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" data-astro-cid-xuahrkkb><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z" data-astro-cid-xuahrkkb></path></svg> <span class="dock-tip" data-astro-cid-xuahrkkb>github</span> </a> <a class="leaflet" href="https://www.linkedin.com/in/islammdshariful/" target="_blank" rel="noopener" aria-label="LinkedIn" data-astro-cid-xuahrkkb> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" data-astro-cid-xuahrkkb><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z" data-astro-cid-xuahrkkb></path></svg> <span class="dock-tip" data-astro-cid-xuahrkkb>linkedin</span> </a> </div> </div> </nav> <div class="sniff" data-search hidden role="dialog" aria-modal="true" aria-labelledby="sniff-title" data-astro-cid-xuahrkkb> <div class="sniff-backdrop" data-search-close data-astro-cid-xuahrkkb></div> <div class="sniff-panel" data-astro-cid-xuahrkkb> <label class="sniff-title" id="sniff-title" for="sniff-input" data-astro-cid-xuahrkkb>What is the bug hungry for?</label> <input class="sniff-input" id="sniff-input" type="search" placeholder="Try: playwright, docker, memory…" autocomplete="off" data-astro-cid-xuahrkkb> <ul class="sniff-results" data-search-results data-astro-cid-xuahrkkb></ul> <p class="sniff-help" data-astro-cid-xuahrkkb>Enter opens the first result · Esc closes</p> </div> </div>  <script type="module">function d(){const t=document.body.classList.contains("dark-mode"),e=document.querySelector("[data-theme-toggle]"),n=document.querySelector("[data-theme-tip]");e&&e.setAttribute("aria-label",t?"Switch to day":"Switch to night"),n&&(n.textContent=t?"day":"night")}function l(){let t=!1;try{t=localStorage.getItem("darkMode")==="true"}catch{}document.body.classList.toggle("dark-mode",t),d()}let c=null;async function u(){if(c)return c;try{c=await import("/pagefind/pagefind.js"),await c.init()}catch{c=null}return c}function s(t){return t.replace(/[&<>"]/g,e=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[e])}function p(){const t=document.querySelector("[data-search]");t&&(t.hidden=!1,document.querySelector("#sniff-input")?.focus(),u())}function m(){const t=document.querySelector("[data-search]");t&&(t.hidden=!0)}let i=0;async function f(t){const e=document.querySelector("[data-search-results]");if(!e)return;if(!t.trim()){e.innerHTML="";return}e.innerHTML='<li class="r-empty">Sniffing…</li>';const n=await u();if(!n){e.innerHTML='<li class="r-empty">Search works on the built site only.</li>';return}const a=await n.search(t),o=await Promise.all(a.results.slice(0,8).map(r=>r.data()));e.innerHTML=o.length?o.map(r=>`<li><a href="${r.url}"><span class="crumb-dot"></span><span><span class="r-title">${s(r.meta?.title||r.url)}</span><span class="r-body">${s((r.excerpt||"").replace(/<[^>]*>/g,"").slice(0,150))}</span></span></a></li>`).join(""):'<li class="r-empty">Nothing to eat for that. Try another word.</li>'}function y(){l(),document.querySelector("[data-theme-toggle]")?.addEventListener("click",()=>{const a=!document.body.classList.contains("dark-mode");document.body.classList.toggle("dark-mode",a);try{localStorage.setItem("darkMode",String(a))}catch{}d()});const t=document.querySelector("[data-sprout]"),e=document.querySelector("[data-sprout-btn]");e?.addEventListener("click",a=>{a.stopPropagation();const o=!t?.classList.contains("open");t?.classList.toggle("open",o),e.setAttribute("aria-expanded",String(o))}),document.querySelector("[data-search-open]")?.addEventListener("click",p),document.querySelectorAll("[data-search-close]").forEach(a=>a.addEventListener("click",m));const n=document.querySelector("#sniff-input");n?.addEventListener("input",()=>{clearTimeout(i),i=window.setTimeout(()=>f(n.value),180)}),n?.addEventListener("keydown",a=>{if(a.key==="Enter"){const o=document.querySelector("[data-search-results] a");o&&o.click()}})}document.addEventListener("keydown",t=>{const e=document.querySelector("[data-search]"),n=t.target?.closest?.('input, textarea, [contenteditable="true"]');t.key==="/"&&!n&&e?.hidden?(t.preventDefault(),p()):t.key==="Escape"&&e&&!e.hidden&&m()});document.addEventListener("click",t=>{const e=document.querySelector("[data-sprout]");e&&!e.contains(t.target)&&(e.classList.remove("open"),document.querySelector("[data-sprout-btn]")?.setAttribute("aria-expanded","false"))});document.addEventListener("astro:page-load",y);document.addEventListener("astro:after-swap",l);</script> <!-- The bug cursor: the same bug as the Home button --> <script type="module">const b=[[18,22,10,18],[18,30,10,30],[18,38,10,42],[46,22,54,18],[46,30,54,30],[46,38,54,42]],L=[[18,22,8,24],[18,30,8,27],[18,38,8,38],[46,22,56,24],[46,30,56,27],[46,38,56,38]],m=t=>t.map(([s,o,u,g])=>`<line x1="${s}" y1="${o}" x2="${u}" y2="${g}"/>`).join("");function k(t=""){return`<svg class="${t}" viewBox="0 0 64 56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="bug-ant" stroke-width="2.5"><line x1="24" y1="10" x2="19" y2="2"/><line x1="40" y1="10" x2="45" y2="2"/></g><path class="bug-head" d="M22 14 Q22 8 32 8 Q42 8 42 14 Z" fill="currentColor" stroke-width="0"/><circle cx="27" cy="12" r="1.3" fill="var(--bug-eye, #fff)" stroke="none"/><circle cx="37" cy="12" r="1.3" fill="var(--bug-eye, #fff)" stroke="none"/><path class="bug-shell" d="M18 16 Q18 14 22 14 L42 14 Q46 14 46 16 L46 38 Q46 48 32 48 Q18 48 18 38 Z" fill="var(--bug-shell, transparent)" stroke-width="2.5"/><g class="bug-legs bug-legs-a" stroke-width="2.5">${m(b)}</g><g class="bug-legs bug-legs-b" stroke-width="2.5">${m(L)}</g><g stroke-width="1.8"><circle cx="26" cy="26" r="3"/><line x1="26" y1="29" x2="26" y2="36"/><circle cx="26" cy="38" r="2.5"/><circle cx="38" cy="22" r="3"/><path d="M38 25 L38 30 Q38 34 34 36"/><circle cx="38" cy="34" r="2.5"/><line x1="29" y1="26" x2="35" y2="22"/></g></svg>`}const v=window.matchMedia("(hover: hover) and (pointer: fine)").matches,f=window.matchMedia("(prefers-reduced-motion: reduce)").matches;let e=null,n=-100,r=-100,l=-100,d=-100,a=0,y=0,h=0,c=!1;function p(){if(v){if(!document.getElementById("bug-cursor-style")){const t=document.createElement("style");t.id="bug-cursor-style",t.textContent="*, *::before, *::after { cursor: none !important; }",document.head.appendChild(t)}e=document.getElementById("bug-cursor-el"),e||(e=document.createElement("div"),e.id="bug-cursor-el",e.innerHTML=k("bug-cursor-svg"),document.body.appendChild(e)),e.style.opacity=c?"1":"0"}}function x(t){if(e){const s=n-l,o=r-d;if(Math.hypot(s,o)>.6){let i=Math.atan2(o,s)+Math.PI/2-a;i=Math.atan2(Math.sin(i),Math.cos(i)),a+=i*(f?1:.25),!f&&t-y>90&&(h^=1,y=t)}e.classList.toggle("step",h===1),e.style.transform=`translate(${n-16}px, ${r-14}px) rotate(${a}rad)`,l=n,d=r}requestAnimationFrame(x)}v&&(document.addEventListener("pointermove",t=>{t.pointerType==="mouse"&&(n=t.clientX,r=t.clientY,c||(c=!0,e&&(e.style.opacity="1"),l=n,d=r))},{passive:!0}),document.addEventListener("mouseleave",()=>{c=!1,e&&(e.style.opacity="0")}),document.addEventListener("mousedown",()=>{e?.classList.add("chomp")}),document.addEventListener("mouseup",()=>{setTimeout(()=>e?.classList.remove("chomp"),120)}),document.addEventListener("astro:after-swap",p),p(),requestAnimationFrame(x));</script> </body> </html> <script type="module" src="/_astro/PostLayout.astro_astro_type_script_index_0_lang.Boksc85P.js"></script>
+</div> <!-- Prev/Next --> <div class="row PageNavigation d-flex justify-content-between font-weight-bold">  <a class="next d-block col-md-6 text-lg-right" href="/blog-build-personal-blog-astro-github-pages/">How I Built My Blog with Astro: A Bug Cursor, a Feeding Ground and GitHub Pages &raquo;</a> <div class="clearfix"></div> </div> </div> </div> </div>  </div> </div> </div> <!-- Dot Grid --> <script src="/scripts/dotgrid.js"></script> <nav class="dock" aria-label="Site" data-astro-cid-xuahrkkb> <button class="dock-btn dock-search" type="button" data-search-open aria-label="Search posts" aria-keyshortcuts="/" data-astro-cid-xuahrkkb> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" data-astro-cid-xuahrkkb><circle cx="10.5" cy="10.5" r="6.5" data-astro-cid-xuahrkkb></circle><line x1="15.5" y1="15.5" x2="20.5" y2="20.5" data-astro-cid-xuahrkkb></line></svg> <span class="dock-tip" data-astro-cid-xuahrkkb>sniff out a post <kbd data-astro-cid-xuahrkkb>/</kbd></span> </button> <a class="dock-home" href="/" aria-label="Home" data-astro-cid-xuahrkkb> <svg class="dock-bug" viewBox="0 0 64 56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="bug-ant" stroke-width="2.5"><line x1="24" y1="10" x2="19" y2="2"/><line x1="40" y1="10" x2="45" y2="2"/></g><path class="bug-head" d="M22 14 Q22 8 32 8 Q42 8 42 14 Z" fill="currentColor" stroke-width="0"/><circle cx="27" cy="12" r="1.3" fill="var(--bug-eye, #fff)" stroke="none"/><circle cx="37" cy="12" r="1.3" fill="var(--bug-eye, #fff)" stroke="none"/><path class="bug-shell" d="M18 16 Q18 14 22 14 L42 14 Q46 14 46 16 L46 38 Q46 48 32 48 Q18 48 18 38 Z" fill="var(--bug-shell, transparent)" stroke-width="2.5"/><g class="bug-legs bug-legs-a" stroke-width="2.5"><line x1="18" y1="22" x2="10" y2="18"/><line x1="18" y1="30" x2="10" y2="30"/><line x1="18" y1="38" x2="10" y2="42"/><line x1="46" y1="22" x2="54" y2="18"/><line x1="46" y1="30" x2="54" y2="30"/><line x1="46" y1="38" x2="54" y2="42"/></g><g class="bug-legs bug-legs-b" stroke-width="2.5"><line x1="18" y1="22" x2="8" y2="24"/><line x1="18" y1="30" x2="8" y2="27"/><line x1="18" y1="38" x2="8" y2="38"/><line x1="46" y1="22" x2="56" y2="24"/><line x1="46" y1="30" x2="56" y2="27"/><line x1="46" y1="38" x2="56" y2="38"/></g><g stroke-width="1.8"><circle cx="26" cy="26" r="3"/><line x1="26" y1="29" x2="26" y2="36"/><circle cx="26" cy="38" r="2.5"/><circle cx="38" cy="22" r="3"/><path d="M38 25 L38 30 Q38 34 34 36"/><circle cx="38" cy="34" r="2.5"/><line x1="29" y1="26" x2="35" y2="22"/></g></svg> <span class="dock-tip" data-astro-cid-xuahrkkb>home</span> </a> <button class="dock-btn dock-theme" type="button" data-theme-toggle aria-label="Switch to night" data-astro-cid-xuahrkkb> <span class="sky" aria-hidden="true" data-astro-cid-xuahrkkb> <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" data-astro-cid-xuahrkkb><circle cx="12" cy="12" r="4.5" data-astro-cid-xuahrkkb></circle><g data-astro-cid-xuahrkkb><line x1="12" y1="1.5" x2="12" y2="4" data-astro-cid-xuahrkkb></line><line x1="12" y1="20" x2="12" y2="22.5" data-astro-cid-xuahrkkb></line><line x1="1.5" y1="12" x2="4" y2="12" data-astro-cid-xuahrkkb></line><line x1="20" y1="12" x2="22.5" y2="12" data-astro-cid-xuahrkkb></line><line x1="4.6" y1="4.6" x2="6.4" y2="6.4" data-astro-cid-xuahrkkb></line><line x1="17.6" y1="17.6" x2="19.4" y2="19.4" data-astro-cid-xuahrkkb></line><line x1="4.6" y1="19.4" x2="6.4" y2="17.6" data-astro-cid-xuahrkkb></line><line x1="17.6" y1="6.4" x2="19.4" y2="4.6" data-astro-cid-xuahrkkb></line></g></svg> <svg class="moon" viewBox="0 0 24 24" fill="currentColor" data-astro-cid-xuahrkkb><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 6.8 6.8 0 0 0 20 14.5Z" data-astro-cid-xuahrkkb></path></svg> <span class="firefly" data-astro-cid-xuahrkkb></span> </span> <span class="dock-tip" data-theme-tip data-astro-cid-xuahrkkb>night</span> </button> <div class="sprout" data-sprout data-astro-cid-xuahrkkb> <button class="sprout-btn" type="button" aria-expanded="false" aria-controls="sprout-links" aria-label="Find me elsewhere" data-sprout-btn data-astro-cid-xuahrkkb> <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-astro-cid-xuahrkkb> <path class="sprout-stem" d="M4 14 C9 14 11 12 13 9" stroke="#5c9a47" stroke-width="2" data-astro-cid-xuahrkkb></path> <path class="sprout-leaf-a" d="M13 9 C13 5 16 3 20 3 C20 7 17 9 13 9 Z" fill="#5c9a47" data-astro-cid-xuahrkkb></path> <path class="sprout-leaf-b" d="M10 12 C8 9 8 6 10 4 C12 6 12 9 10 12 Z" fill="#7bb562" data-astro-cid-xuahrkkb></path> </svg> <span class="dock-tip" data-astro-cid-xuahrkkb>find me</span> </button> <div class="sprout-links" id="sprout-links" data-astro-cid-xuahrkkb> <a class="leaflet leaflet-gh" href="https://github.com/islammdshariful" target="_blank" rel="noopener" aria-label="GitHub" data-astro-cid-xuahrkkb> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" data-astro-cid-xuahrkkb><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z" data-astro-cid-xuahrkkb></path></svg> <span class="dock-tip" data-astro-cid-xuahrkkb>github</span> </a> <a class="leaflet leaflet-li" href="https://www.linkedin.com/in/islammdshariful/" target="_blank" rel="noopener" aria-label="LinkedIn" data-astro-cid-xuahrkkb> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" data-astro-cid-xuahrkkb><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z" data-astro-cid-xuahrkkb></path></svg> <span class="dock-tip" data-astro-cid-xuahrkkb>linkedin</span> </a> </div> </div> </nav> <div class="sniff" data-search hidden role="dialog" aria-modal="true" aria-labelledby="sniff-title" data-astro-cid-xuahrkkb> <div class="sniff-backdrop" data-search-close data-astro-cid-xuahrkkb></div> <div class="sniff-panel" data-astro-cid-xuahrkkb> <label class="sniff-title" id="sniff-title" for="sniff-input" data-astro-cid-xuahrkkb>What is the bug hungry for?</label> <input class="sniff-input" id="sniff-input" type="search" placeholder="Try: playwright, docker, memory…" autocomplete="off" data-astro-cid-xuahrkkb> <ul class="sniff-results" data-search-results data-astro-cid-xuahrkkb></ul> <p class="sniff-help" data-astro-cid-xuahrkkb>Enter opens the first result · Esc closes</p> </div> </div>  <script type="module">function d(){const t=document.body.classList.contains("dark-mode"),e=document.querySelector("[data-theme-toggle]"),n=document.querySelector("[data-theme-tip]");e&&e.setAttribute("aria-label",t?"Switch to day":"Switch to night"),n&&(n.textContent=t?"day":"night")}function l(){let t=!1;try{t=localStorage.getItem("darkMode")==="true"}catch{}document.body.classList.toggle("dark-mode",t),d()}let c=null;async function u(){if(c)return c;try{c=await import("/pagefind/pagefind.js"),await c.init()}catch{c=null}return c}function s(t){return t.replace(/[&<>"]/g,e=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[e])}function p(){const t=document.querySelector("[data-search]");t&&(t.hidden=!1,document.querySelector("#sniff-input")?.focus(),u())}function m(){const t=document.querySelector("[data-search]");t&&(t.hidden=!0)}let i=0;async function f(t){const e=document.querySelector("[data-search-results]");if(!e)return;if(!t.trim()){e.innerHTML="";return}e.innerHTML='<li class="r-empty">Sniffing…</li>';const n=await u();if(!n){e.innerHTML='<li class="r-empty">Search works on the built site only.</li>';return}const a=await n.search(t),o=await Promise.all(a.results.slice(0,8).map(r=>r.data()));e.innerHTML=o.length?o.map(r=>`<li><a href="${r.url}"><span class="crumb-dot"></span><span><span class="r-title">${s(r.meta?.title||r.url)}</span><span class="r-body">${s((r.excerpt||"").replace(/<[^>]*>/g,"").slice(0,150))}</span></span></a></li>`).join(""):'<li class="r-empty">Nothing to eat for that. Try another word.</li>'}function y(){l(),document.querySelector("[data-theme-toggle]")?.addEventListener("click",()=>{const a=!document.body.classList.contains("dark-mode");document.body.classList.toggle("dark-mode",a);try{localStorage.setItem("darkMode",String(a))}catch{}d()});const t=document.querySelector("[data-sprout]"),e=document.querySelector("[data-sprout-btn]");e?.addEventListener("click",a=>{a.stopPropagation();const o=!t?.classList.contains("open");t?.classList.toggle("open",o),e.setAttribute("aria-expanded",String(o))}),document.querySelector("[data-search-open]")?.addEventListener("click",p),document.querySelectorAll("[data-search-close]").forEach(a=>a.addEventListener("click",m));const n=document.querySelector("#sniff-input");n?.addEventListener("input",()=>{clearTimeout(i),i=window.setTimeout(()=>f(n.value),180)}),n?.addEventListener("keydown",a=>{if(a.key==="Enter"){const o=document.querySelector("[data-search-results] a");o&&o.click()}})}document.addEventListener("keydown",t=>{const e=document.querySelector("[data-search]"),n=t.target?.closest?.('input, textarea, [contenteditable="true"]');t.key==="/"&&!n&&e?.hidden?(t.preventDefault(),p()):t.key==="Escape"&&e&&!e.hidden&&m()});document.addEventListener("click",t=>{const e=document.querySelector("[data-sprout]");e&&!e.contains(t.target)&&(e.classList.remove("open"),document.querySelector("[data-sprout-btn]")?.setAttribute("aria-expanded","false"))});document.addEventListener("astro:page-load",y);document.addEventListener("astro:after-swap",l);</script> <!-- The bug cursor: the same bug as the Home button --> <script type="module">const b=[[18,22,10,18],[18,30,10,30],[18,38,10,42],[46,22,54,18],[46,30,54,30],[46,38,54,42]],L=[[18,22,8,24],[18,30,8,27],[18,38,8,38],[46,22,56,24],[46,30,56,27],[46,38,56,38]],m=t=>t.map(([s,o,u,g])=>`<line x1="${s}" y1="${o}" x2="${u}" y2="${g}"/>`).join("");function k(t=""){return`<svg class="${t}" viewBox="0 0 64 56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="bug-ant" stroke-width="2.5"><line x1="24" y1="10" x2="19" y2="2"/><line x1="40" y1="10" x2="45" y2="2"/></g><path class="bug-head" d="M22 14 Q22 8 32 8 Q42 8 42 14 Z" fill="currentColor" stroke-width="0"/><circle cx="27" cy="12" r="1.3" fill="var(--bug-eye, #fff)" stroke="none"/><circle cx="37" cy="12" r="1.3" fill="var(--bug-eye, #fff)" stroke="none"/><path class="bug-shell" d="M18 16 Q18 14 22 14 L42 14 Q46 14 46 16 L46 38 Q46 48 32 48 Q18 48 18 38 Z" fill="var(--bug-shell, transparent)" stroke-width="2.5"/><g class="bug-legs bug-legs-a" stroke-width="2.5">${m(b)}</g><g class="bug-legs bug-legs-b" stroke-width="2.5">${m(L)}</g><g stroke-width="1.8"><circle cx="26" cy="26" r="3"/><line x1="26" y1="29" x2="26" y2="36"/><circle cx="26" cy="38" r="2.5"/><circle cx="38" cy="22" r="3"/><path d="M38 25 L38 30 Q38 34 34 36"/><circle cx="38" cy="34" r="2.5"/><line x1="29" y1="26" x2="35" y2="22"/></g></svg>`}const v=window.matchMedia("(hover: hover) and (pointer: fine)").matches,f=window.matchMedia("(prefers-reduced-motion: reduce)").matches;let e=null,n=-100,r=-100,l=-100,d=-100,a=0,y=0,h=0,c=!1;function p(){if(v){if(!document.getElementById("bug-cursor-style")){const t=document.createElement("style");t.id="bug-cursor-style",t.textContent="*, *::before, *::after { cursor: none !important; }",document.head.appendChild(t)}e=document.getElementById("bug-cursor-el"),e||(e=document.createElement("div"),e.id="bug-cursor-el",e.innerHTML=k("bug-cursor-svg"),document.body.appendChild(e)),e.style.opacity=c?"1":"0"}}function x(t){if(e){const s=n-l,o=r-d;if(Math.hypot(s,o)>.6){let i=Math.atan2(o,s)+Math.PI/2-a;i=Math.atan2(Math.sin(i),Math.cos(i)),a+=i*(f?1:.25),!f&&t-y>90&&(h^=1,y=t)}e.classList.toggle("step",h===1),e.style.transform=`translate(${n-16}px, ${r-14}px) rotate(${a}rad)`,l=n,d=r}requestAnimationFrame(x)}v&&(document.addEventListener("pointermove",t=>{t.pointerType==="mouse"&&(n=t.clientX,r=t.clientY,c||(c=!0,e&&(e.style.opacity="1"),l=n,d=r))},{passive:!0}),document.addEventListener("mouseleave",()=>{c=!1,e&&(e.style.opacity="0")}),document.addEventListener("mousedown",()=>{e?.classList.add("chomp")}),document.addEventListener("mouseup",()=>{setTimeout(()=>e?.classList.remove("chomp"),120)}),document.addEventListener("astro:after-swap",p),p(),requestAnimationFrame(x));</script> </body> </html> <script type="module" src="/_astro/PostLayout.astro_astro_type_script_index_0_lang.Boksc85P.js"></script>
