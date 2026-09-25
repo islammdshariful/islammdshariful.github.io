@@ -1,0 +1,312 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link rel="icon" href="/assets/images/favicon.ico"><title>The AI QA Setup I Use Every Day: A PR Test Planner, a QA Executor and a Shared Memory | islammdshariful</title><meta name="description" content="Two Claude Code skills that I built and use on every pull request: a PR Test Planner that plans the tests and a QA Executor that runs them, with one shared memory that the whole team reads and writes."><meta name="google-site-verification" content="kI5ETCzLkbONpDOiDEiMP6j_vddLz72R34Rz0Y67iQo"><!-- Open Graph --><meta property="og:title" content="The AI QA Setup I Use Every Day: A PR Test Planner, a QA Executor and a Shared Memory | islammdshariful"><meta property="og:description" content="Two Claude Code skills that I built and use on every pull request: a PR Test Planner that plans the tests and a QA Executor that runs them, with one shared memory that the whole team reads and writes."><meta property="og:image" content="/assets/images/qa-run-and-memory.png"><meta property="og:type" content="article"><meta property="og:url" content="https://islammdshariful.github.io/blog-pr-test-planner-qa-executor-shared-memory/"><!-- Twitter Card --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="The AI QA Setup I Use Every Day: A PR Test Planner, a QA Executor and a Shared Memory | islammdshariful"><meta name="twitter:description" content="Two Claude Code skills that I built and use on every pull request: a PR Test Planner that plans the tests and a QA Executor that runs them, with one shared memory that the whole team reads and writes."><meta name="twitter:image" content="/assets/images/qa-run-and-memory.png"><!-- Bootstrap 4.1.3 CSS --><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"><!-- RSS --><link rel="alternate" type="application/rss+xml" title="islammdshariful" href="/rss.xml"><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.CDGfc0hd.js"></script><!-- Google Fonts --><link href="https://fonts.googleapis.com/css?family=Righteous%7CMerriweather:300,300i,400,400i,700,700i" rel="stylesheet"><!-- FontAwesome 5 --><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjm1D7N/aWc6ggvdrGQ2g/SCnF1yTRhViEZJf+M4Cuuf+A" crossorigin="anonymous"><!-- GA4 --><script async src="https://www.googletagmanager.com/gtag/js?id=G-5M0KQ60CEW"></script><script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-5M0KQ60CEW');
+    </script><link rel="stylesheet" href="/_astro/_slug_.BwgdWuYC.css"></head> <body class="layout-post"> <!-- Navbar --> <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top mediumnavigation nav-down"> <div class="container pr-0"> <!-- Search icon (left) --> <div class="nav-left-actions"> <div class="nav-search-wrap"> <div class="nav-search"> <span class="nav-search-icon"> <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> </span> <!-- Search placeholder - will be replaced in Task 11 --> <form class="bd-search" id="pagefind-form"> <input type="text" class="form-control text-small launch-modal-search" id="pagefind-input" maxlength="255" value="" placeholder="Type and enter..."> </form> <div id="pagefind-results"><ul></ul></div> </div> </div> </div> <div class="navbar-nav-always" id="navbarMediumish"> <ul class="navbar-nav mx-auto"> <li class="nav-item"> <a class="nav-link" href="/">Home</a> </li> <li class="nav-item"> <a class="nav-link" href="/blog">Blogs</a> </li> <li class="nav-item"> <a class="nav-link" href="/about-me">About Me</a> </li> </ul> </div> <!-- Dark mode toggle --> <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode"> <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg> <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg> </button> </div> </nav> <!-- Site Content --> <div class="site-content"> <div class="container">  <div class="main-content">  <div class="container"> <div class="row"> <div class="col-md-10 mx-auto"> <div class="mainheading"> <!-- Author Box --> <div class="row post-top-meta"> <div class="col-xs-12 col-md-3 col-lg-2 text-center text-md-left mb-4 mb-md-0"> <img class="author-thumb" src="/assets/images/avatar.jpg" alt="islammdshariful"> </div> <div class="col-xs-12 col-md-9 col-lg-10 text-center text-md-left"> <a class="link-dark">islammdshariful</a> <br><span class="author-description">QA Engineer. I write about Playwright, automation, and AI-driven QA workflows.</span> </div> </div> <h1 class="posttitle">The AI QA Setup I Use Every Day: A PR Test Planner, a QA Executor and a Shared Memory</h1> </div> <img class="featured-image img-fluid" src="/assets/images/qa-run-and-memory.png" alt="The AI QA Setup I Use Every Day: A PR Test Planner, a QA Executor and a Shared Memory" loading="lazy"> <div class="article-post">  <p>For months, I have used two Claude Code skills that I built to QA pull requests on a large WordPress plugin:</p>
+<ul>
+<li><strong>The PR Test Planner</strong> reads a pull request and writes the test plan.</li>
+<li><strong>The QA Executor</strong> runs that plan on a real test site and writes the report.</li>
+</ul>
+<p>They work as a pair, and they are how I test every day.</p>
+<p>A month ago, I added a third part: <strong>a shared memory</strong>. Every run of either skill reads what earlier runs learned, and it writes down what it learned itself. The whole team shares that one memory. After a month with it, the results are clearly better, so I want to share the whole setup.</p>
+<p>This post is about the ideas, not the code. You can build the same thing for your own project.</p>
+<hr>
+<h2 id="the-problem-agents-that-forget">The problem: agents that forget</h2>
+<p>Every new session starts from zero. So an agent makes last week’s mistakes again:</p>
+<ul>
+<li>It spends time on a test-site problem that an earlier run already solved.</li>
+<li>It marks a test as passed, but it tested the wrong page or old code.</li>
+<li>It misses a kind of test case that a person already caught in review.</li>
+</ul>
+<p>The worst of these is the <strong>false pass</strong>: a green result that is not true. It is the one mistake that sends a bug to users. Reference docs cannot stop it, because it is not a fact about the code. It is a fact about <strong>how the testing went wrong</strong>, and that knowledge exists only in past runs.</p>
+<hr>
+<h2 id="idea-1-write-the-spec-before-you-read-the-code">Idea 1: Write the spec before you read the code</h2>
+<p>Before the PR Test Planner looks at the code, it writes a short list of what the fix <strong>should</strong> do. The list comes from the issue, the comments, the PR description and the screenshots, and each line says where it came from.</p>
+<p>The order is the point. When an agent reads the code first, “what it should do” quietly becomes “what the code does”, and a wrong fix then passes its own tests.</p>
+<p>After that, the PR Test Planner compares the list with the code. Each gap becomes a test that <strong>fails</strong> while the gap is real. A gap found this way is often worth more to the PR author than the whole test plan.</p>
+<hr>
+<h2 id="idea-2-plan-run-and-let-a-second-reader-check-each-one">Idea 2: Plan, run, and let a second reader check each one</h2>
+<p>The work is split in two:</p>
+<ul>
+<li><strong>The PR Test Planner</strong> writes the test plan. It never touches the site.</li>
+<li><strong>The QA Executor</strong> installs the PR’s build on a test site that is used only for QA. Then it runs the plan, looks for more bugs and writes one report. It asks before it posts anything to the PR.</li>
+</ul>
+<p>After each step, <strong>a second agent</strong> reviews the result. It sees only the files, not the conversation, so it cannot copy the first agent’s assumptions. It sends work back more often than I expected: in the first 16 reviewed runs, only 4 passed with no changes.</p>
+<hr>
+<h2 id="idea-3-give-the-agents-a-memory-of-lessons">Idea 3: Give the agents a memory of lessons</h2>
+<p>The memory is a set of short lessons, in plain text. Each lesson answers the same questions:</p>
+<ul>
+<li><strong>Where</strong> in the product does it apply?</li>
+<li><strong>What step</strong> leads you into it?</li>
+<li><strong>What does it look like</strong> when it happens?</li>
+<li><strong>What is the real cause</strong>, and <strong>what is the fix</strong>?</li>
+<li><strong>When</strong> was it last seen to be true, and <strong>how many runs</strong> did it help?</li>
+</ul>
+<p>The last two questions keep the memory honest. A lesson that nobody uses can be removed later. A lesson that is too old can be checked again.</p>
+<p>The most valuable lessons are about <strong>false passes</strong>. When the agent catches itself trusting a green result that was not true, that becomes a check that every later run makes before it trusts a result.</p>
+<hr>
+<h2 id="idea-4-make-lessons-easy-to-find-by-area-and-by-step">Idea 4: Make lessons easy to find by area and by step</h2>
+<p>More lessons help only if the agent finds the right one.</p>
+<p>At first, each lesson said only <strong>where</strong> it applies, for example “redirects”. But an agent often searches by <strong>what it is doing</strong> at that moment, for example “choose a URL to test”. Those words were not in the lesson, so the search missed it.</p>
+<p>So each lesson now names <strong>both</strong>: the area of the product, and the steps that lead to it. The agent searches on both. In my test, the right lesson came first every time.</p>
+<hr>
+<h2 id="idea-5-make-recording-a-step-not-a-habit">Idea 5: Make recording a step, not a habit</h2>
+<p>The weakest link is simple: a lesson exists only if an agent chooses to write it. On a rushed run, nothing gets written.</p>
+<p>So recording is <strong>its own step</strong> at the end of every run:</p>
+<ol>
+<li>Give credit to each lesson that helped.</li>
+<li>Write down each new trap, and each false pass that the agent caught.</li>
+<li>Add one line to a run log.</li>
+<li>Say, in the report, what was recorded. “Nothing new” is allowed, but it must be written, with a reason.</li>
+</ol>
+<p><strong>Three guards</strong> check this: a script that checks the report, the second reader, and a hook that stops the session from ending while the step is missing. Asking an agent to record is not enough. Something has to check that it did.</p>
+<hr>
+<h2 id="idea-6-keep-the-memory-outside-the-skills">Idea 6: Keep the memory outside the skills</h2>
+<p>My first version kept the lessons inside the skills. Then I found that a skill update <strong>replaces the whole skill folder</strong>, so it would delete everything a teammate had learned.</p>
+<p>Now the memory is kept apart from the skills, in <strong>its own branch of the product’s git repo</strong>. That branch has no product code. Each person keeps a copy of only that branch, in a separate folder, so it never touches their working copy.</p>
+<p>This gives three good things for free:</p>
+<ul>
+<li><strong>The right people already have access</strong>, because they already work on the repo.</li>
+<li><strong>Git keeps the history</strong> of every lesson, so a bad lesson is easy to fix or undo.</li>
+<li><strong>Nothing else changes.</strong> No build and no workflow reads that branch.</li>
+</ul>
+<hr>
+<h2 id="idea-7-one-memory-for-the-whole-team">Idea 7: One memory for the whole team</h2>
+<p>This is the part that made the biggest difference. The PR Test Planner and the QA Executor read and write the same memory, so a lesson that one of them learns helps the other. Every run now does two more things by itself:</p>
+<ul>
+<li><strong>At the start,</strong> it gets the latest memory, and the first time it sets the memory up.</li>
+<li><strong>At the end,</strong> it asks the user, then shares what it learned.</li>
+</ul>
+<p>A few rules make it work for many people:</p>
+<ul>
+<li><strong>When two people add lessons at the same time, both are kept.</strong> When two people change the same line, both versions stay, and a check marks it for a person to fix.</li>
+<li><strong>Every lesson says which pull request it came from.</strong> So anyone can see where it came from, and why.</li>
+<li><strong>A monthly check</strong> reports problems in the memory: repeated lessons, missing fields, lessons ready to become standing rules, and runs that did not record. It reports, and a person decides.</li>
+<li><strong>Do not delete too early.</strong> A lesson that nobody has used yet usually has not come up yet. It is not a bad lesson.</li>
+</ul>
+<p>Now, what one person learns, the next person gets on their next run.</p>
+<hr>
+<h2 id="what-changed">What changed</h2>
+<p>After a month:</p>
+<ul>
+<li>Old test-site problems no longer get solved twice. The agent finds the old fix first.</li>
+<li>False passes that one run caught became checks that every later run makes.</li>
+<li>Almost every run records something.</li>
+<li>When a person or a reviewer catches a mistake, the question changed. It is no longer “who missed this?” It is “which lesson would have stopped it?”</li>
+</ul>
+<hr>
+<h2 id="using-this-for-your-own-project">Using this for your own project</h2>
+<p>I built the PR Test Planner and the QA Executor for one plugin, but the approach works for any project:</p>
+<ol>
+<li><strong>Spec first:</strong> write what the change should do before you read the code.</li>
+<li><strong>Plan, then run</strong> on a site used only for QA, with a second reader for each.</li>
+<li><strong>Record as a step,</strong> and check that it happened.</li>
+<li><strong>Keep the memory outside the skills,</strong> in a place your team can already read, with history.</li>
+<li><strong>Share it,</strong> so every run makes the next one better.</li>
+</ol>
+<p>To adapt my skills to another plugin, you can ask Claude to do it: change the product docs, the repo and the test-site setup, and give that plugin its own memory.</p>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<p>An AI QA agent without a memory is like a new tester every day: fast and capable, but sure to repeat last week’s mistakes.</p>
+<p>The PR Test Planner plans, the QA Executor runs, and the shared memory makes each run better than the last. The agents learn from every run, and the whole team learns with them.</p>  </div> <p><small><span class="post-date"><time datetime="2026-09-25">Sep 25, 2026</time></span></small></p> <!-- Categories --> <div class="after-post-cats"> <ul class="tags mb-4"> <li><a href="/categories#AI">AI</a></li><li><a href="/categories#Knowledge-Management">Knowledge Management</a></li><li><a href="/categories#QA">QA</a></li> </ul> </div> <!-- Tags --> <div class="after-post-tags"> <ul class="tags"> <li><a href="/tags#ai-agent">#ai-agent</a></li><li><a href="/tags#claude-code">#claude-code</a></li><li><a href="/tags#knowledge-base">#knowledge-base</a></li><li><a href="/tags#test-automation">#test-automation</a></li> </ul> </div> <!-- Buy me a coffee --> <div class="post-support" style="margin-top:2rem;padding:1.5rem 0;border-top:1px solid rgba(0,0,0,0.1);font-size:0.95rem;color:#555;">
+If you found this post helpful, consider <a href="https://buymeacoffee.com/islammdshariful" target="_blank" style="color:#A69990;font-weight:600;">buying me a coffee</a>. It keeps me writing!
+</div> <!-- Prev/Next --> <div class="row PageNavigation d-flex justify-content-between font-weight-bold"> <a class="prev d-block col-md-6" href="/blog-build-personal-blog-astro-github-pages/">&laquo; How to Build a Personal Blog Site with Astro and Deploy to GitHub Pages</a>  <div class="clearfix"></div> </div> </div> </div> </div>  </div> </div> </div> <!-- Footer --> <footer class="footer"> <div class="container text-center"> <div class="footer-links mb-2"> <a href="/">Home</a> <span class="footer-sep">&middot;</span> <a href="/blog">Blogs</a> <span class="footer-sep">&middot;</span> <a href="/categories">Categories</a> <span class="footer-sep">&middot;</span> <a href="/about-me">About Me</a> <span class="footer-sep">&middot;</span> <a href="https://github.com/islammdshariful" target="_blank">GitHub</a> <span class="footer-sep">&middot;</span> <a href="https://www.linkedin.com/in/islamdshariful/" target="_blank">LinkedIn</a> </div> <p class="footer-copy">&copy; 2026 islammdshariful.</p> </div> </footer> <!-- Bootstrap JS --> <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script> <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script> <!-- Dot Grid --> <script src="/scripts/dotgrid.js"></script> <!-- Animated Bug Cursor --> <script src="/scripts/bug-cursor.min.js"></script> <!-- Navbar scroll hide/show --> <script>
+    (function() {
+      var didScroll = false;
+      var lastScrollTop = 0;
+      var delta = 5;
+      var nav = document.querySelector('nav');
+      var navbarHeight = nav.offsetHeight;
+
+      window.addEventListener('scroll', function() { didScroll = true; });
+
+      setInterval(function() {
+        if (didScroll) {
+          var st = window.pageYOffset || document.documentElement.scrollTop;
+          if (Math.abs(lastScrollTop - st) <= delta) return;
+          if (st > lastScrollTop && st > navbarHeight) {
+            nav.classList.remove('nav-down');
+            nav.classList.add('nav-up');
+            nav.style.top = -nav.offsetHeight + 'px';
+          } else {
+            if (st + window.innerHeight < document.body.scrollHeight) {
+              nav.classList.remove('nav-up');
+              nav.classList.add('nav-down');
+              nav.style.top = '0px';
+            }
+          }
+          lastScrollTop = st;
+          didScroll = false;
+        }
+      }, 250);
+    })();
+    </script> <!-- Dark mode --> <script>
+    function initDarkMode() {
+      var toggle = document.getElementById('darkModeToggle');
+      var body = document.body;
+      if (localStorage.getItem('darkMode') === 'true') {
+        body.classList.add('dark-mode');
+      }
+      toggle.removeEventListener('click', toggleDarkMode);
+      toggle.addEventListener('click', toggleDarkMode);
+    }
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    }
+    initDarkMode();
+    document.addEventListener('astro:after-swap', initDarkMode);
+    </script> <!-- Pagefind search --> <script>
+    var _pagefind = null;
+
+    function initSearch() {
+      var searchIcon = document.querySelector('.nav-search-icon');
+      var searchWrap = document.querySelector('.nav-search');
+      var input = document.getElementById('pagefind-input');
+      var resultsContainer = document.getElementById('pagefind-results');
+      var resultsList = resultsContainer.querySelector('ul');
+
+      searchIcon.addEventListener('click', function(e) {
+        e.stopPropagation();
+        searchWrap.classList.toggle('active');
+        if (searchWrap.classList.contains('active')) {
+          input.focus();
+        }
+      });
+
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.nav-search') && !e.target.closest('#pagefind-results')) {
+          searchWrap.classList.remove('active');
+          resultsContainer.classList.remove('visible');
+        }
+      });
+
+      async function loadPagefind() {
+        if (!_pagefind) {
+          try {
+            _pagefind = await import('/pagefind/pagefind.js');
+            await _pagefind.init();
+          } catch (e) {
+            console.warn('Pagefind not available (run a production build first)');
+            return null;
+          }
+        }
+        return _pagefind;
+      }
+
+      function showLoader() {
+        resultsList.textContent = '';
+        var loader = document.createElement('li');
+        loader.className = 'pagefind-loader';
+        loader.style.cssText = 'padding:16px 0;text-align:center;color:#999;font-size:0.85rem;';
+        var bugSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        bugSvg.setAttribute('width', '24');
+        bugSvg.setAttribute('height', '20');
+        bugSvg.setAttribute('viewBox', '0 0 64 56');
+        bugSvg.style.cssText = 'animation:bugWalk 0.3s steps(2) infinite;vertical-align:middle;margin-right:8px;';
+        var c = document.body.classList.contains('dark-mode') ? '#ccc' : '#666';
+        var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('fill', 'none');
+        g.setAttribute('stroke', c);
+        g.setAttribute('stroke-linecap', 'round');
+        g.setAttribute('stroke-linejoin', 'round');
+        g.setAttribute('stroke-width', '2.5');
+        // Simplified bug shape
+        var body = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        body.setAttribute('cx', '32'); body.setAttribute('cy', '30');
+        body.setAttribute('rx', '12'); body.setAttribute('ry', '16');
+        g.appendChild(body);
+        var head = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        head.setAttribute('cx', '32'); head.setAttribute('cy', '12'); head.setAttribute('r', '6');
+        g.appendChild(head);
+        [[18,22,8,18],[18,30,6,30],[18,38,8,42],[46,22,56,18],[46,30,58,30],[46,38,56,42]].forEach(function(l) {
+          var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', l[0]); line.setAttribute('y1', l[1]);
+          line.setAttribute('x2', l[2]); line.setAttribute('y2', l[3]);
+          g.appendChild(line);
+        });
+        bugSvg.appendChild(g);
+        loader.appendChild(bugSvg);
+        var text = document.createTextNode('Finding...');
+        loader.appendChild(text);
+        resultsList.appendChild(loader);
+        resultsContainer.classList.add('visible');
+      }
+
+      var debounceTimer;
+      input.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async function() {
+          var query = input.value.trim();
+          if (!query) {
+            resultsContainer.classList.remove('visible');
+            resultsList.textContent = '';
+            return;
+          }
+
+          showLoader();
+          var loaderStart = Date.now();
+
+          var pf = await loadPagefind();
+          if (!pf) return;
+
+          var search = await pf.search(query);
+          var results = await Promise.all(search.results.slice(0, 10).map(function(r) { return r.data(); }));
+
+          // Ensure loader is visible for at least 500ms
+          var elapsed = Date.now() - loaderStart;
+          if (elapsed < 500) {
+            await new Promise(function(r) { setTimeout(r, 500 - elapsed); });
+          }
+
+          resultsList.textContent = '';
+          if (results.length === 0) {
+            var noResult = document.createElement('li');
+            noResult.style.cssText = 'padding:8px 0;color:#999;';
+            noResult.textContent = 'No results found.';
+            resultsList.appendChild(noResult);
+          } else {
+            results.forEach(function(result) {
+              var li = document.createElement('li');
+              li.className = 'pagefind-result';
+              var a = document.createElement('a');
+              a.href = result.url;
+              var titleSpan = document.createElement('span');
+              titleSpan.className = 'title';
+              titleSpan.textContent = result.meta.title || '';
+              a.appendChild(titleSpan);
+              a.appendChild(document.createElement('br'));
+              var urlSpan = document.createElement('span');
+              urlSpan.className = 'url';
+              urlSpan.textContent = result.url;
+              a.appendChild(urlSpan);
+              a.appendChild(document.createElement('br'));
+              var bodySpan = document.createElement('span');
+              bodySpan.className = 'body';
+              bodySpan.textContent = (result.excerpt || '').replace(/<[^>]*>/g, '').substring(0, 160);
+              a.appendChild(bodySpan);
+              li.appendChild(a);
+              resultsList.appendChild(li);
+            });
+          }
+          resultsContainer.classList.add('visible');
+        }, 200);
+      });
+
+      document.getElementById('pagefind-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+      });
+    }
+
+    // Add bug walk animation keyframes
+    if (!document.getElementById('bugwalk-style')) {
+      var s = document.createElement('style');
+      s.id = 'bugwalk-style';
+      s.textContent = '@keyframes bugWalk { 0% { transform: translateX(0); } 50% { transform: translateX(4px); } 100% { transform: translateX(0); } }';
+      document.head.appendChild(s);
+    }
+
+    initSearch();
+    document.addEventListener('astro:after-swap', initSearch);
+    </script> </body> </html>
